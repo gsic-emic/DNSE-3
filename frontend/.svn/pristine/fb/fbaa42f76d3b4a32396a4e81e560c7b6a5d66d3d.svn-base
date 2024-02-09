@@ -1,0 +1,62 @@
+var ProjectsPainter = {
+    
+    projects: null,
+    
+    init: function(){
+    },
+    
+    paint: function(){
+        ProjectsPainter.getSimulationProjects();
+    },
+    
+    paintProjectsTable: function(){
+        var table_body = $("#simulationProjectsTable > tbody");
+        table_body.empty();
+        for (var i = 0; i < this.projects.length; i++){
+            var table_tr = $("<tr></tr>");
+            var td_name = $('<td><a href="' + getBaseUrl() + 'php/controller/simulationProject.php?projectId=' + this.projects[i].projectId + '">' + this.projects[i].name + '</a></td>');
+            var td_single_sim = $("<td>" + this.projects[i].numSingleSimulations + "</td>");
+            var td_param_sweep_sim = $("<td>" + this.projects[i].numParameterSweepSimulations + "</td>");
+            var td_param_cd = $("<td>" + this.projects[i].creationDate + "</td>");
+            var td_param_ud = $("<td>" + this.projects[i].updateDate + "</td>");
+            var td_actions = $('<td><div class="btn-group">' +
+                                        '<button class="btn btn-default btn-sm"><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Ver detalles</button>' +
+                                        '<button data-toggle="dropdown" class="btn btn-default btn-sm dropdown-toggle"><span class="caret"></span></button>' +
+                                        '<ul class="dropdown-menu">' +
+                                            '<li><a href="#" onclick="NewSimulationModal.newSimulation(' + this.projects[i].projectId + ')"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Nueva simulación</a></li>' +
+                                            '<li><a href="#" onclick="EditProjectModal.editProject(' + this.projects[i].projectId + ')"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Editar proyecto</a></li>' +
+                                            '<li><a href="#" onclick="DeleteProjectModal.deleteProject(' + this.projects[i].projectId + ')"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Eliminar proyecto</a></li>' +
+                                        '</ul>' +
+                                    '</div></td>');
+           table_tr.append(td_name);
+           table_tr.append(td_single_sim);
+           table_tr.append(td_param_sweep_sim);
+           table_tr.append(td_param_cd);
+           table_tr.append(td_param_ud);
+           table_tr.append(td_actions);
+           table_body.append(table_tr);
+        }
+    },
+    
+    getSimulationProjects: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/",
+            method: "GET",
+            dataType: "json",//the expected data type from the server
+            success : function(data) {
+                ProjectsPainter.projects = data;
+                ProjectsPainter.paintProjectsTable();
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    }
+};
+
+

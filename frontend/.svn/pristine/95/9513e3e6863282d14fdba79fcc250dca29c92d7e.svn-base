@@ -1,0 +1,7 @@
+<?php
+/**
+ * Some properties that are required by the application
+ */
+$_CONF_PROP = array();
+$_CONF_PROP["dnse3_root"] = "/DNSE3";
+?>

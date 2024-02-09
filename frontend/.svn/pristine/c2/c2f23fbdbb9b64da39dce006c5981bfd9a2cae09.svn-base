@@ -1,0 +1,39 @@
+<?php
+require_once(dirname(__FILE__)."/../conf/properties.php");
+require_once(dirname(__FILE__)."/../core/authenticate.php");
+
+$error_credentials = true;
+//start the session to save the variables
+session_start();
+if (isset($_POST)){
+    //set the session variables if it is possible
+    if (isset($_POST["loginUsername"]) && !empty($_POST["loginUsername"])){
+        $_SESSION["username"] = $_POST["loginUsername"];
+    }
+    if (isset($_POST["loginPassword"]) && !empty($_POST["loginPassword"])){
+        $_SESSION["password"] = $_POST["loginPassword"];
+    }
+    if ( isset($_POST["loginUsername"]) && !empty($_POST["loginUsername"]) && isset($_POST["loginPassword"]) && !empty($_POST["loginPassword"])){
+        $authenticated = ldap_authenticate($_SESSION["username"], $_SESSION["password"]);
+        if ($authenticated){
+           $error_credentials = false;
+        }
+    }
+}
+
+//redirect depending on the login result
+if (isset($_SESSION["username"]) && !empty($_SESSION["username"]) && isset($_SESSION["password"]) && !empty($_SESSION["password"]) && !$error_credentials){
+    $username = $_SESSION["username"];
+    require_once(dirname(__FILE__)."/UsersController.php");
+    $uc = new UsersController();
+    $user = $uc->getUser($username);
+    //header('Location: '. $CONF_PROP["dnse3_root"]. "/php/view/main.php");
+    require_once(dirname(__FILE__)."/../view/main.php");
+}else{
+    //header('Location: '. $CONF_PROP["dnse3_root"]. "/php/view/login.php");
+    require_once(dirname(__FILE__)."/../view/login.php");
+}
+
+
+
+?>

@@ -1,0 +1,96 @@
+/**
+ * Manager for the modal dialog that deletes a project
+ */
+var DeleteProjectModal = {
+    
+    modalId: "delete-project-modal",
+    cancelButtonId: "delete-project-modal-cancel",
+    acceptButtonId: "delete-project-modal-accept",
+    projectId: null,
+    painters: null,
+    
+    init: function(){
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            DeleteProjectModal.acceptDeleteProject();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            DeleteProjectModal.cancelDeleteProject();
+        });
+        this.painters = new Array();
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    setModalFields: function(){
+        //there are no fields to set
+        //remove the error messages
+        $("#alert-danger-delete-project-modal").addClass("hidden");
+        DeleteProjectModal.showModal();
+    },
+    
+    checkModalFields: function(){
+        //there are no fields to check
+        this.deleteRequest();
+    },
+    
+    deleteProject: function(projectId){
+        this.projectId = projectId;
+        this.setModalFields();
+    },
+    
+    acceptDeleteProject: function(){
+        this.checkModalFields();
+    },
+    
+    addPainter: function(painterObj){
+        this.painters.push(painterObj);
+    },
+    
+    deletePainter: function(painterObj){
+        var index = this.painters.indexOf(painterObj);
+        if (index > -1){
+            this.painters.splice(index, 1);
+        }
+    },
+    
+    notifyPainters: function(){
+        for (var i = 0; i < this.painters.length; i++){
+            var painter = this.painters[i];
+            painter.paint();
+        }
+    },
+    
+    deleteRequest: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + DeleteProjectModal.projectId  + "/",
+            method: 'DELETE',
+            success: function(data){
+                DeleteProjectModal.projectId = null;
+                DeleteProjectModal.hideModal();
+                DeleteProjectModal.notifyPainters();
+            },
+            error : function(xhr, status) {
+                $("#alert-danger-delete-project-modal").removeClass("hidden");
+                $("#alert-danger-delete-project-modal").html(xhr.responseText);
+                //$("#alert-danger-delete-project-modal").html("Se ha producido un error al tratar de borrar el proyecto.");
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+    cancelDeleteProject: function(){
+        this.hideModal();
+    }
+    
+};
+

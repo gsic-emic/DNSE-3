@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration
+	status="WARN"
+	name="DNSE3Orchestra"
+	packages="">
+	<Properties>
+		<Property 
+			name="csvLog.fileName">
+			log/usersDNSE3
+		</Property>
+		<Property 
+			name="file-header">
+			instante,idAccion,idGrupo,idModelo,idSimulacion,tiempPrep,extra
+		</Property>
+	</Properties>
+	<Appenders>
+		<RollingFile
+			name="csvDNSE3"
+			fileName="${csvLog.fileName}.csv"
+			filePattern="${csvLog.fileName}.%d{yyyy}.csv">
+			<MarkerFilter 
+					marker="DNSE3" 
+					onMatch="ACCEPT" 
+					onMismatch="DENY" />
+			<CsvParameterLayout 
+				header="${file-header}\n" /> 
+			<Policies>
+				<TimeBasedTriggeringPolicy 
+					interval="1"
+					modulate="true" />
+			</Policies>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Root 
+			level="trace" 
+			additivity="false">
+			<AppenderRef 
+				ref="csvDNSE3"
+				level="INFO">
+			</AppenderRef>
+		</Root>
+	</Loggers>
+</Configuration>

@@ -1,0 +1,8 @@
+.classpath
+.project
+.cproject
+.metadata
+org.eclipse.jdt.apt.core.prefs
+.vscode/
+.settings
+.DS_Store

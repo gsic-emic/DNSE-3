@@ -1,0 +1,42 @@
+/**
+ * CSS for the simulationProject screen
+ */
+ #sim-project-tabs.nav-tabs{
+     margin-bottom: 10px;
+ }
+ 
+ div.information-panel{
+     padding: 5px;
+ }
+ 
+ span.title{
+     margin: 5px 0px;
+     font-weight: 700;
+     color: #73879C;
+     display:block;
+ }
+ 
+ div.information-pane-item{
+     margin-bottom: 1px;
+     border-bottom: 1px solid gray;
+ }
+ 
+ table td.status{
+     width: 65px;
+     text-align: center;
+     vertical-align: middle !important;
+     font-size: 1.5em;
+ }
+
+ table td.actions{
+     /*width: 143px;*/
+     width: 198px;
+ }
+ 
+ table td .btn-group.actions-group{
+     width: 126px;
+ }
+ 
+ #singleSimulationsTable, #paramSweepSimulationsTable{
+     margin-bottom: 100px;
+ }

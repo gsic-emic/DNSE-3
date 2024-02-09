@@ -1,0 +1,17 @@
+
+$(document).ready(function(){
+    $("#edit_project_accept").click(function(){
+        var projectId = $('#projectId').val();
+        alert(projectId);
+    });
+});
+
+function show_edit_project(project_id){
+    $('#projectId').val(project_id);
+    $('#edit_project_modal').modal('show');
+}
+
+function edit_project_accept(){
+    
+}
+

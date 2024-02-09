@@ -1,0 +1,30 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">Detalles de la simulación</h3>
+    </div>
+    <div class="panel-body">
+        <div id="alert-danger-edit-simulation-details" class="alert alert-danger hidden" role="alert"></div>
+        <form id="form-edit-simulation-details">
+            <div id="form-group-esd-name" class="form-group">
+                <label class="control-label" for="edit-simulation-name">Nombre</label>
+                <input type="text" class="form-control" id="edit-simulation-name" placeholder="Nombre de la simulación" required autofocus>
+            </div>
+            <div id="form-group-esd-repetitions" class="form-group">
+                <label class="control-label" for="edit-simulation-repetitions">Número de repeticiones</label>
+                <input type="text" class="form-control" id="edit-simulation-repetitions" placeholder="Número de repeticiones de la simulación" required>
+            </div>
+            <div id="form-group-esd-simulation-type" class="form-group">
+                <label class="control-label">Tipo de simulación</label>
+                <div>
+                    <label class="radio-inline">
+                        <input type="radio" name="edit-simulation-type" id="edit-simulation-type-single" value="single"> Individual
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="edit-simulation-type" id="edit-simulation-type-parameter-sweep" value="parameter-sweep"> Barrido de parámetros
+                    </label>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+

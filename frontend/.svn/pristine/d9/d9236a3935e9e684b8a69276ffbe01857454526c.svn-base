@@ -1,0 +1,7 @@
+<?php
+//start the session
+session_start();
+if (!isset($_SESSION["username"]) || empty($_SESSION["username"]) || !isset($_SESSION["password"]) || empty($_SESSION["password"])){
+    header('Location: '. "../../index.php");
+}
+?>

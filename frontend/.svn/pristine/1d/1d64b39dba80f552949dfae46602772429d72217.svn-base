@@ -1,0 +1,26 @@
+<?php
+require_once(dirname(__FILE__)."/../conf/properties.php");
+require_once(dirname(__FILE__)."/../model/User.php");
+
+/**
+ * Manager for the users
+ */
+class UsersManager{
+    
+    private $api_users_url;
+    
+    public function __construct() {
+        global $CONF_PROP;
+        $this->api_users_url = $CONF_PROP["api_url"] . "users/";
+    }
+    
+    public function getUser($username){
+        $api_user_url = $this->api_users_url . $username. "/";
+        $result = file_get_contents($api_user_url);
+        $json_result = json_decode($result, true);
+        $user = new User($json_result);
+        return $user;
+    }
+}
+
+?>

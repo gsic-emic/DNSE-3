@@ -1,0 +1,44 @@
+.nav .breadcrumb {
+    margin: 0 7px;
+}
+
+p.navbar-text.sim-ejec {
+    margin-right: 0px;
+}
+
+p.navbar-text.sim-current-max {
+    margin-left: 0px;
+    margin-right: 30px;
+}
+
+.dropdown-menu.dropdown-user {
+    z-index: 1001;
+}
+
+label.label-error {
+    color: #a94442;
+}
+
+@media(min-width: 768px) {
+    .nav .breadcrumb {
+        float: left;
+        margin: 7px 10px;
+    }
+    
+    .navbar-right {
+        margin-right: 0px;
+    }
+}
+
+ table td.actions{
+     /*width: 143px;*/
+     width: 198px;
+ }
+ 
+ table td .btn-group.actions-group{
+     width: 126px;
+ }
+
+ #simulationProjectsTable{
+     margin-bottom: 100px;
+ }

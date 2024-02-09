@@ -1,0 +1,45 @@
+/**
+ * CSS for the simulationProject screen
+ */
+ 
+ #sim-project-details{
+     margin-bottom: 10px;
+ }
+ 
+ table td.status{
+     width: 125px;
+ }
+ 
+ table td.status > div{
+     width: 125px;
+ }
+ 
+ table td.status div.progress{
+     display: inline-block;
+     margin-bottom: 0px;
+     width: 100px;
+     vertical-align: middle;
+ }
+ 
+ table td.status span.glyphicon{
+     top: 4px;
+     font-size: 1.3em;
+     margin-left: 5px;
+ }
+ 
+  table td.status div.progress + span.glyphicon{
+     top: 2px;
+ }
+
+ table td.actions{
+     /*width: 143px;*/
+     width: 200px;
+ }
+ 
+ table td .btn-group.actions-group{
+     width: 185px;
+ }
+ 
+ #singleSimulationsTable, #paramSweepSimulationsTable{
+     margin-bottom: 125px;
+ }

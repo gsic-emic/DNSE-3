@@ -1,0 +1,28 @@
+function dateToTimestamp(date){
+    //get the timestamp in seconds instead of milliseconds
+    return Math.round(date.getTime()/1000);
+}
+
+/**
+ * return the date with this format: dd-mm-YYYY HH:ii
+ */
+function dateFormat(date){
+    var dd = date.getDate(); 
+    var mm = date.getMonth()+1;//the first month is 0
+    var yyyy = date.getFullYear(); 
+    var hh = date.getHours();
+    var ii = date.getMinutes();
+    if(dd < 10){
+        dd = '0' + dd;
+    } 
+    if(mm < 10){
+        mm = '0' + mm;
+    }
+    if (hh < 10){
+        hh = '0' + hh;
+    }
+    if (ii < 10){
+        ii = '0' + ii;
+    }
+    return dd + "-" + mm + "-" + yyyy + " " + hh + ":" + ii;
+}

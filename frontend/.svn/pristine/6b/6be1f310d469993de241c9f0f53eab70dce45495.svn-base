@@ -1,0 +1,19 @@
+
+$(document).ready(function(){
+    //init the modals
+    EditProjectModal.init();
+    NewProjectModal.init();
+    NewSimulationModal.init();
+    //init the painters
+    ProjectsPainter.init();
+});
+
+function getBaseApiUrl(){
+    //set the base path to the API URI
+    var BaseApiUrl = "/api";
+    if (window.location.href.indexOf("/DNSE3/") !==-1){
+        BaseApiUrl  = "/DNSE3" + BaseApiUrl ;
+    }
+    return BaseApiUrl ;
+}
+

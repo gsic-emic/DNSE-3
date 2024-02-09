@@ -1,0 +1,107 @@
+/**
+ * Manager for the modal dialog that deletes a simulation
+ */
+var DeleteSimulationModal = {
+    
+    modalId: "delete-simulation-modal",
+    cancelButtonId: "delete-simulation-modal-cancel",
+    acceptButtonId: "delete-simulation-modal-accept",
+    simulationId: null,
+    simulationType: null,
+    
+    init: function(){
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            DeleteSimulationModal.acceptDeleteSimulation();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            DeleteSimulationModal.cancelDeleteSimulation();
+        });
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    setModalFields: function(){
+        //there are no fields to set
+        //remove the error messages
+        $("#alert-danger-delete-simulation-modal").addClass("hidden");
+        this.showModal();
+    },
+    
+    checkModalFields: function(){
+        //there are no fields to check
+        if (this.simulationType == "single"){
+            this.deleteSingleSimulation();
+        }else if (this.simulationType == "sweep"){
+            this.deleteParameterSweepSimulation();
+        }
+    },
+    
+    deleteSimulation: function(simulationId, simulationType){
+        this.simulationId = simulationId;
+        this.simulationType = simulationType;
+        this.setModalFields();
+    },
+    
+    acceptDeleteSimulation: function(){
+        this.checkModalFields();
+    },
+    
+    deleteSingleSimulation: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/singlesimulations/" + this.simulationId,
+            method: 'DELETE',
+            success: function(data){
+                DeleteSimulationModal.simulationId = null;
+                DeleteSimulationModal.simulationType = null;
+                DeleteSimulationModal.hideModal();
+                SingleSimulationsPainter.paint();
+            },
+            error : function(xhr, status) {
+                $("#alert-danger-delete-simulation-modal").removeClass("hidden");
+                $("#alert-danger-delete-simulation-modal").html(xhr.responseText);
+                //$("#alert-danger-delete-simulation-modal").html("Se ha producido un error al tratar de borrar la simulación.");
+                SingleSimulationsPainter.paint();
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+    deleteParameterSweepSimulation: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/parametersweepsimulations/" + this.simulationId,
+            method: 'DELETE',
+            success: function(data){
+                DeleteSimulationModal.simulationId = null;
+                DeleteSimulationModal.simulationType = null;
+                DeleteSimulationModal.hideModal();
+                ParameterSweepSimulationsPainter.paint();
+            },
+            error : function(xhr, status) {
+                $("#alert-danger-delete-simulation-modal").removeClass("hidden");
+                $("#alert-danger-delete-simulation-modal").html(xhr.responseText);
+                //$("#alert-danger-delete-simulation-modal").html("Se ha producido un error al tratar de borrar la simulación.");
+                ParameterSweepSimulationsPainter.paint();
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+    cancelDeleteSimulation: function(){
+        this.hideModal();
+    }
+    
+};
+

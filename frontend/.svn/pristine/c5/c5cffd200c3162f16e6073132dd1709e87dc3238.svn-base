@@ -1,0 +1,43 @@
+var G_VARS = new Array();
+
+$(document).ready(function(){
+    
+    //initialize the global vars
+    var projectId = getLocationParameter("projectId");
+    G_VARS["projectId"] = projectId;
+    
+    //initialize the painters
+    SingleSimulationsPainter.init();
+    SingleSimulationsPainter.paint();
+    
+    //initialize the tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    //initialize the controllers
+    SingleSimulationController.init();
+    SingleSimulationController.addPainter(SingleSimulationsPainter);
+    ParameterSweepSimulationController.init();
+    ParameterSweepSimulationController.addPainter(ParameterSweepSimulationsPainter);
+    
+    //initialize the modals
+    EditProjectModal.init();
+    EditProjectModal.addPainter(SimulationPainter);
+    
+    NewProjectModal.init();
+    
+    DeleteProjectModal.init();
+    DeleteProjectModal.addPainter(ProjectsPainter);
+    
+    NewSimulationModal.init();
+    NewSimulationModal.addPainter(SingleSimulationsPainter);
+    NewSimulationModal.addPainter(ParameterSweepSimulationsPainter);
+    
+    NewParameterSweepSimulation.init();
+    NewSimulationFileGathering.init();
+    
+    DeleteSimulationModal.init();
+    DeleteSimulationModal.addPainter(SingleSimulationsPainter);
+    DeleteSimulationModal.addPainter(ParameterSweepSimulationsPainter);
+    
+});
+

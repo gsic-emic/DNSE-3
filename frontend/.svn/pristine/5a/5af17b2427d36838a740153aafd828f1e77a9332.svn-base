@@ -1,0 +1,18 @@
+.nav .breadcrumb {
+    margin: 0 7px;
+}
+
+.dropdown-menu.dropdown-user {
+    z-index: 1001;
+}
+
+@media(min-width: 768px) {
+    .nav .breadcrumb {
+        float: left;
+        margin: 7px 10px;
+    }
+    
+    .navbar-right {
+        margin-right: 0px;
+    }
+}

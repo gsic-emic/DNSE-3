@@ -1,0 +1,22 @@
+/**
+ * Manager for the modal dialog that deletes a simulation
+ */
+var ErrorModal = {
+    
+    modalId: "error-modal",
+    closeButtonId: "error-modal-close",
+    
+    init: function(){
+        
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    }
+    
+};
+

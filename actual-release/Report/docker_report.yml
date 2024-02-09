@@ -1,0 +1,18 @@
+version: "3"
+services:
+  report:
+    image: gsicemic/dnse3:report
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: on-failure
+      #resources:
+      #limits:
+      #memory: 256M
+    environment:
+      - limit=1
+      - queueAddress=/*IP queue service*/:8081
+    networks:
+      - webnet
+networks:
+  webnet:

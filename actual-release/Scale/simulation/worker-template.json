@@ -1,0 +1,28 @@
+{
+	"heat_template_version": "2021-04-16",
+	"description": "Launch an instance of a worker for the simulation cluster.",
+	"resources": {
+		"server": {
+			"type": "OS::Nova::Server",
+			"properties": {
+				"image": "dnse3_simulation_worker",
+				"flavor": "dnse3_simulation_service_container",
+				"key_name": "dnse3-new",
+				"networks": [
+					{
+						"network": "dnse3-pri-net"
+					}
+				],
+				"user_data": {
+					"str_replace": {
+						"template": "#!/bin/bash\ndocker swarm join --token $token /*IP manager*/:2377\n",
+						"params": {
+							"$token": "/*token swarm*/"
+						}
+					}
+				},
+				"user_data_format": "RAW"
+			}
+		}
+	}
+}

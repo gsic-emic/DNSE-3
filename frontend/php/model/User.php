@@ -1,0 +1,89 @@
+<?php
+
+/**
+ * A user in the system
+ */
+class User{
+    
+    /**
+     * @var string the username
+     */
+    private $username;
+    /**
+     * @var integer the number of simulations that are running 
+     */
+    private $currentSimulations;
+    /**
+     * @var integer the maximum number of simulations that the user can execute 
+     */
+    private $maxSimulations;
+    /**
+     * @var string a relative URI to the simulation projects resource
+     */
+    private $projectsUri;
+    
+    public function __construct($properties) {
+        $reflectionClass = new ReflectionClass(get_class($this));
+        //get the private properties of the class
+        $reflection_properties = $reflectionClass->getProperties(ReflectionProperty::IS_PRIVATE);
+        foreach ($reflection_properties as $r_prop) {
+            $r_prop_name = $r_prop->getName();
+            if (array_key_exists($r_prop_name, $properties)){
+                $this->$r_prop_name = $properties[$r_prop_name];
+            }
+        }
+    }
+    
+    public function getUsername(){
+        return $this->username;
+    }
+    
+    public function getCurrentSimulations(){
+        return $this->currentSimulations;
+    }
+    
+    public function getMaxSimulations(){
+        return $this->maxSimulations;
+    }
+    
+    public function getProjectsUri(){
+        return $this->projectsUri;
+    }
+    
+    public function setUsername($username){
+        $this->username = $username;
+    }
+    
+    public function setCurrentSimulations($currentSimulations){
+        $this->currentSimulations = $currentSimulations;
+    }
+    
+    public function setMaxSimulations($maxSimulations){
+        $this->maxSimulations = $maxSimulations;
+    }
+    
+    public function setProjectsUri($projectsUri){
+        $this->projectsUri = $projectsUri;
+    }
+    
+    public function getPercentage($decimals = 0){
+        //If the user has no available simulations or the limit has been reached (or exceeded) we return the 100
+        if ($this->maxSimulations == 0 || ($this->currentSimulations >= $this->maxSimulations)){
+            return 100;
+        }
+        return round(($this->currentSimulations/$this->maxSimulations)*100,$decimals);
+    }
+    
+    public function getProperties($remove_nulls = true) {
+        $properties = get_object_vars($this);
+        if ($remove_nulls){
+            foreach($properties as $prop_key => $prop_value){
+                if (is_null($prop_value)){
+                    unset($properties[$prop_key]);
+                }
+            }
+        }
+        return $properties;
+    }
+}
+?>

@@ -1,0 +1,15 @@
+
+$(document).ready(function(){
+    EditProjectModal.init();
+    ProjectsPainter.init();
+});
+
+function getBaseApiUrl(){
+    //set the base path to the API URI
+    var BaseApiUrl = "/api";
+    if (window.location.href.indexOf("/DNSE3/") !==-1){
+        BaseApiUrl  = "/DNSE3" + BaseApiUrl ;
+    }
+    return BaseApiUrl ;
+}
+

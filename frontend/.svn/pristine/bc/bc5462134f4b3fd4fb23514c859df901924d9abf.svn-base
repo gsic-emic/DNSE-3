@@ -1,0 +1,36 @@
+/**
+ * A parameter for a simulation
+ */
+var Parameter = function(parameters){
+	
+    var data = parameters;
+	
+    this.getData = function(){
+        return data;
+    },
+    
+    this.getName = function(){
+        return data.name;
+    },
+    
+    this.setName = function(name){
+        data.name = name;
+    },
+    
+    this.getValueType = function(){
+        return data.valueType;
+    },
+    
+    this.setValueType = function(valueType){
+        data.valueType = valueType;
+    },
+    
+    this.getValue = function(){
+        return data.value;
+    },
+    
+    this.setValue = function(value){
+        data.value = value;
+    }
+    
+}

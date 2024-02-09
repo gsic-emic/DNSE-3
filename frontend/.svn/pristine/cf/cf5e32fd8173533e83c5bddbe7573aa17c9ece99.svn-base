@@ -1,0 +1,26 @@
+ #new-simulation-parameters-single-table td,
+ #new-simulation-parameters-sweep-table td,
+ #edit-simulation-parameters-single-table td,
+ #edit-simulation-parameters-sweep-table td{
+     vertical-align: middle;
+ }
+ 
+ #new-simulation-parameters-single-table td div.form-group,
+ #new-simulation-parameters-sweep-table td div.form-group,
+ #edit-simulation-parameters-single-table td div.form-group,
+ #edit-simulation-parameters-sweep-table td div.form-group{
+     margin-bottom: 0px;
+ }
+ 
+  
+ .breadcrumb.list-inline.bigger-size{
+     font-size: 18px;
+     padding-top: 6px;
+     padding-bottom: 0px;
+     margin: 7px 10px;
+ }
+ 
+ h1{
+     /*color: #73879C;*/
+     color: #1b809e;
+ }

@@ -1,0 +1,45 @@
+<?php
+// Initialize session
+//session_start();
+
+function ldap_authenticate($user, $password) {
+	if(empty($user) || empty($password)) return false;
+
+	//putenv('TLS_CACERT=null');
+	//putenv('TLS_REQCERT=never');
+
+	// Active Directory server
+	$ldap_host = "ldaps://ldap2.tel.uva.es";
+
+	// Active Directory DN
+	$ldap_dn = "ou=Usuarios,dc=tel,dc=uva,dc=es";
+
+	// connect to active directory
+	$ldap = ldap_connect($ldap_host,636) or die("Server not found");
+
+	ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
+	ldap_set_option($ldap, LDAP_OPT_DEBUG_LEVEL, 7);
+
+        return true; ////delete this line!!!!!!!!!!!!!!!
+	// verify user and password
+	if($bind = ldap_bind($ldap, "uid=".$user.",ou=Usuarios,dc=tel,dc=uva,dc=es", $password)) {
+		// valid
+		// check presence in groups
+		ldap_unbind($ldap);
+		$ldap2 = ldap_connect($ldap_host,636) or die("Server not found");
+		ldap_set_option($ldap2, LDAP_OPT_PROTOCOL_VERSION, 3);
+		ldap_set_option($ldap2, LDAP_OPT_DEBUG_LEVEL, 7);
+		
+		ldap_bind($ldap2, 'cn=lector_labs,dc=tel,dc=uva,dc=es', "LABS2017Read");
+
+		$filter="(uid=".$user.")";
+		$results=ldap_search($ldap2, "dc=tel,dc=uva,dc=es", $filter);
+
+		return (ldap_count_entries($ldap2, $results)==1);
+		//return true;
+	} else {
+		// invalid name or password
+		return false;
+	}
+}
+?>

@@ -1,0 +1,35 @@
+//The time in milliseconds between two calls to refresh the screen
+const VERY_LOW_REFRESH_INTERVAL = 300000;
+const LOW_REFRESH_INTERVAL = 60000;
+const MEDIUM_REFRESH_INTERVAL = 30000;
+const HIGH_REFRESH_INTERVAL = 15000;
+
+$(document).ready(function(){
+    //initialize the modals       
+    NewProjectModal.init();
+    NewProjectModal.addPainter(ProjectsPainter);
+    
+    EditProjectModal.init();
+    EditProjectModal.addPainter(ProjectsPainter);
+    
+    DeleteProjectModal.init();
+    DeleteProjectModal.addPainter(ProjectsPainter);
+    
+    NewSimulationModal.init();
+    NewSimulationModal.addPainter(ProjectsPainter);
+    
+    NewSingleSimulation.init();
+    NewParameterSweepSimulation.init();
+    NewSimulationFileGathering.init();
+
+    //init the painters
+    ProjectsPainter.init();
+});
+
+/**
+ * Set an interval to refresh the screen
+ */
+setInterval(function(){
+    ProjectsPainter.paint();
+}, VERY_LOW_REFRESH_INTERVAL);
+

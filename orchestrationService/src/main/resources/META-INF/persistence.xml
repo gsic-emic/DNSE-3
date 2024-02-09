@@ -1,0 +1,50 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+
+    <persistence-unit name="dnse3" transaction-type="RESOURCE_LOCAL">
+        <description>
+            Persistence unit for the DNSE3 Orchestration Server
+        </description>
+
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <class>dnse3.orchestration.jpa.model.project.Project</class>
+        <class>dnse3.orchestration.jpa.model.user.User</class>
+        <class>dnse3.orchestration.jpa.model.project.ParameterDescription</class>
+        <class>dnse3.orchestration.jpa.model.simulation.Parameter</class>
+        <class>dnse3.orchestration.jpa.model.project.OutputFileStructure</class>
+        <class>dnse3.orchestration.jpa.model.project.OutputFile</class>
+        <class>dnse3.orchestration.jpa.model.simulation.Simulation</class>
+        <class>dnse3.orchestration.jpa.model.simulation.SingleSimulation</class>
+        <class>dnse3.orchestration.jpa.model.simulation.ParameterSweepSimulation</class>
+        
+        <properties>
+            <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver" />
+            <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/dnse3?autoReconnect=true" />
+            <property name="javax.persistence.jdbc.user" value="dnse3_admin" />
+            <property name="javax.persistence.jdbc.password" value=/*PASSWORD_USER_DB*/ />
+            <property name="javax.persistence.lock.timeout" value="250"/>
+            
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQL95Dialect" />
+            <property name="hibernate.show_sql" value="false" />
+            <property name="hibernate.enable_lazy_load_no_trans" value="true" /> 
+            <!-- <property name="hibernate.hbm2ddl.auto" value="validate" /> -->
+            <property name="hibernate.hbm2ddl.auto" value="create" />
+
+            <property name="hibernate.connection.characterEncoding" value="utf8" />
+            <property name="hibernate.connection.useUnicode" value="true" />
+            <property name="hibernate.connection.charSet" value="UTF-8" /> 
+
+            <property name="hibernate.c3p0.acquire_increment" value="1" />
+            <property name="hibernate.c3p0.idle_test_period" value="3000" /> 
+            <property name="hibernate.c3p0.max_size" value="100" />
+            <property name="hibernate.c3p0.max_statements" value="15" />
+            <property name="hibernate.c3p0.min_size" value="5" />
+            <property name="hibernate.c3p0.timeout" value="60" /> 
+        </properties>
+
+    </persistence-unit>
+
+</persistence>

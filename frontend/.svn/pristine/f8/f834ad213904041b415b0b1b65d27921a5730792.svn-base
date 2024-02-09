@@ -1,0 +1,39 @@
+var G_VARS = new Array();
+
+$(document).ready(function(){
+    var projectId = getLocationParameter("projectId");
+    G_VARS["projectId"] = projectId;
+    
+    
+    //init the controllers
+    SingleSimulationController.init();
+    SingleSimulationController.addPainter(SingleSimulationsPainter);
+    ParameterSweepSimulationController.init();
+    ParameterSweepSimulationController.addPainter(ParameterSweepSimulationsPainter);
+    
+    //init the modals
+    EditProjectModal.init();
+    EditProjectModal.addPainter(ProjectsPainter);
+    EditProjectModal.addPainter(SimulationPainter);
+    
+    NewProjectModal.init();
+    
+    DeleteProjectModal.init();
+    DeleteProjectModal.addPainter(ProjectsPainter);
+    
+    NewSimulationModal.init();
+    NewParameterSweepSimulation.init();
+    NewSimulationFileGathering.init();
+    DeleteSimulationModal.init();
+    
+    //init the painters
+    SingleSimulationsPainter.init();
+    SingleSimulationsPainter.paint();
+    ParameterSweepSimulationsPainter.init();
+    ParameterSweepSimulationsPainter.paint();
+    
+    //initialize the tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+});
+

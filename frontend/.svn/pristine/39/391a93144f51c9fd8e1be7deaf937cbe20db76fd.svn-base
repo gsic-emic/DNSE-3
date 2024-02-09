@@ -1,0 +1,56 @@
+/**
+ * Manager for the modal dialog that creates a new simulation
+ */
+var NewSimulationModal = {
+    
+    modalId: "new_simulation_modal",
+    cancelButtonId: "new_simulation_modal_cancel",
+    acceptButtonId: "new_simulation_modal_accept",
+    
+    init: function(){
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            NewSimulationModal.acceptNewSimulation();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            NewSimulationModal.cancelNewSimulation();
+        });
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    setModalFields: function(){
+        NewSimulationModal.showModal();
+    },
+    
+    checkModalFields: function(){
+        var errors = false;
+        if (!errors){
+            this.postRequest();
+        }
+    },
+    
+    newSimulation: function(){
+        this.setModalFields();
+    },
+    
+    acceptNewSimulation: function(){
+        this.checkModalFields();
+    },
+    
+    postRequest: function(){
+        NewSimulationModal.hideModal();
+    },
+    
+    cancelNewSimulation: function(){
+        this.hideModal();
+    }
+    
+};
+

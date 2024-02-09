@@ -1,0 +1,45 @@
+<?php
+
+/*
+ * Enum class for the different status for a simulation
+ */
+class SimulationStatus{
+    
+    /**
+     * The simulation is waiting to be executed. All of its attributes can be modified (name, numRepetitions, parameters, outputfiles). It can be started
+     */
+    const PREPARING = "PREPARING";
+    /**
+     * The simulation is starting to be executed. None of its attributes can be modified. No operations are allowed.
+     */
+    const WAITING = "WAITING";
+    /**
+     * The simulation has been published and it is being executed. Only its name can be modified. It can be cancelled or paused.
+     */
+    const PROCESSING = "PROCESSING";
+    /**
+     * The simulation has been paused. Only its name can be modified. It can be resumed or cancelled.
+     */
+    const PAUSED = "PAUSED";
+     /**
+     * All the published simulations are being deleted. All of its attributes can be modified.
+     */
+    const CLEANING = "CLEANING";
+    /**
+     * There was an error in the simulation. All of its attributes can be modified to allow the user to solve the error.
+     */
+    const ERROR = "ERROR";
+     /**
+     * The simulation has been completed and it is waiting for the report being completed. Only its name can be modified. 
+     */
+    const REPORTING = "REPORTING";
+     /**
+     * The simulation has been completed and the result files can be downloaded. Only its name can be modified.
+     */
+    const FINISHED = "FINISHED";
+    /**
+     * The simulation is being removed. None of its attributes can be modified.
+     */
+    const REMOVING = "REMOVING";
+}
+?>

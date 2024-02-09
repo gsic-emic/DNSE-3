@@ -1,0 +1,9 @@
+ #new-simulation-parameters-single-table td,
+ #new-simulation-parameters-sweep-table td{
+     vertical-align: middle;
+ }
+ 
+ #new-simulation-parameters-single-table td div.form-group,
+ #new-simulation-parameters-sweep-table td div.form-group{
+     margin-bottom: 0px;
+ }

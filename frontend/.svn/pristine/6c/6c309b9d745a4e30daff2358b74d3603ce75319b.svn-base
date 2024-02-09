@@ -1,0 +1,106 @@
+var SingleSimulationsPainter = {
+    
+    singleSimulations: null,
+    
+    init: function(){
+    },
+    
+    paint: function(){
+        this.getSingleSimulations();
+    },
+    
+    /**
+     * Fill in the table for the single simulations
+     */
+    paintSingleSimulationsTable: function(){
+        $("#singleSimulationsTable").removeClass("hidden");
+        $("#noSingleSimulationsAlert").addClass("hidden");
+        var table_body = $("#singleSimulationsTable > tbody");
+        table_body.empty();
+        for (var i = 0; i < this.singleSimulations.length; i++){
+            var table_tr = $("<tr></tr>");
+            var td_name = $('<td>' + this.singleSimulations[i].name + '</td>');
+            var td_num_rep = $("<td>" + this.singleSimulations[i].numRepetitions + "</td>");
+            var td_param_cd = $("<td>" + this.singleSimulations[i].creationDate + "</td>");
+            var td_param_ud = $("<td>" + this.singleSimulations[i].updateDate + "</td>");
+            var param_status_html = '<td class="status">';
+            switch(this.singleSimulations[i].status){
+                case "WAITING": param_status_html += '<span class="glyphicon glyphicon-time" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Esperando"></span>' +
+                                                   '<span class="sr-only">Esperando</span>';
+                                break;
+                case "PROCESSING": param_status_html += '<span class="glyphicon glyphicon-flash" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Procesando"></span>' +
+                                                      '<span class="sr-only"Procesando</span>';
+                                   break;
+                                                  
+                case "ERROR": param_status_html += '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Error"></span>' +
+                                                 '<span class="sr-only"Error</span>';
+                              break;
+                case "FINISHED": param_status_html += '<span class="glyphicon glyphicon-ok" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Terminado"></span>' +
+                                                    '<span class="sr-only"Terminado</span>';
+                                 break;
+                    
+            }
+            param_status_html += "</td>";
+            var td_param_status = $(param_status_html);
+            var actions_html = '<td class="actions"><div class="btn-group actions-group">' +
+                               '<button class="btn btn-default btn-sm" ><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Ver detalles</button>' +
+                               '<button data-toggle="dropdown" class="btn btn-default btn-sm dropdown-toggle"><span class="caret"></span></button>' +
+                               '<ul class="dropdown-menu">' +
+                                    '<li><a href="#" onclick="EditSimulationModal.editSimulation(' + this.singleSimulations[i].simulationId + ',\'single\')"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Editar simulación</a></li>';
+            switch(this.singleSimulations[i].status){
+                case "WAITING": actions_html+= '<li><a href="#" onclick="SingleSimulationController.startSimulation(' + this.singleSimulations[i].simulationId + ')"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Ejecutar simulación</a></li>';
+                                break;
+                case "PROCESSING": actions_html+= '<li><a href="#" onclick="SingleSimulationController.stopSimulation(' + this.singleSimulations[i].simulationId + ')"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Detener simulación</a></li>';
+                                   break;
+                case "FINISHED": actions_html+= '<li><a href="#" onclick="SimulationManager.showResults(' + this.singleSimulations[i].simulationId + ')"><span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span> Ver resultados</a></li>';
+                                 break;
+            }
+            actions_html+= '<li><a href="#" onclick="DeleteSimulationModal.deleteSimulation(' + this.singleSimulations[i].simulationId + ',\'single\')"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Eliminar simulación</a></li>' +
+                           '</ul>' +
+                           '</div></td>';
+           var td_actions = $(actions_html);
+           table_tr.append(td_name);
+           table_tr.append(td_num_rep);
+           table_tr.append(td_param_cd);
+           table_tr.append(td_param_ud);
+           table_tr.append(td_param_status);
+           table_tr.append(td_actions);
+           table_body.append(table_tr);
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+    },
+    
+     /**
+     * Hide the table for the single simulations and shows an alert message
+     */
+    showNoSingleSimulations: function(){
+        $("#singleSimulationsTable").addClass("hidden");
+        $("#noSingleSimulationsAlert").removeClass("hidden");
+    },
+    
+    getSingleSimulations: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/singlesimulations/",
+            method: "GET",
+            dataType: "json",//the expected data type from the server
+            success : function(data) {
+                SingleSimulationsPainter.singleSimulations = data;
+                if (SingleSimulationsPainter.singleSimulations.length > 0){
+                    SingleSimulationsPainter.paintSingleSimulationsTable();
+                }else{
+                    SingleSimulationsPainter.showNoSingleSimulations();
+                }
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    }
+};
+
+

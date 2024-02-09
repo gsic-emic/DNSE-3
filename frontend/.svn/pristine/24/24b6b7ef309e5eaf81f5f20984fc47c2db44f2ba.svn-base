@@ -1,0 +1,653 @@
+/**
+ * Manager for the modal dialog that creates a new simulation
+ */
+var NewSimulationModal = {
+    
+    modalId: "new_simulation_modal",
+    cancelButtonId: "new_simulation_modal_cancel",
+    acceptButtonId: "new_simulation_modal_accept",
+    projectId: null,
+    
+    /**
+     * the parameters that are available for the simulation
+     */
+    parameterDescriptions: null,
+    
+    /**
+     * the parameters that the user has added to the single simulation from those available
+     */
+    singleSimulationParameters: null,
+    
+    /**
+     * the name of the parameter that is being updated in a single simulation
+     */
+    singleSimulationUpdateParameterName: null,
+    
+    init: function(){
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            NewSimulationModal.acceptNewSimulation();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            NewSimulationModal.cancelNewSimulation();
+        });
+        
+        $("#new-simulation-nsp-value-type").change(function(){
+            $("#new-simulation-nsp-value").val("");
+            if ($("#new-simulation-nsp-value-type").val()=="fixed"){
+                $("#form-group-nsp-value").show();
+            }else{
+                $("#form-group-nsp-value").hide();
+            }
+        });
+        
+        //onclick event on the add parameter button
+        $("#add-parameter-single").click(function(){
+            NewSimulationModal.setAddIndividualSimulationParameter();
+        });
+        
+        //onclick event on the close parameter button
+        $("#close-parameter-single").click(function(){
+            NewSimulationModal.closeIndividualSimulationParameter();
+        });
+        
+        //onclick event on the update parameter button
+        $("#update-parameter-single").click(function(){
+            NewSimulationModal.updateIndividualSimulationParameter();
+        });
+        
+        //onclick event on the save parameter button
+        $("#save-parameter-single").click(function(){
+            NewSimulationModal.saveIndividualSimulationParameter();
+        });        
+        
+        //events for the tabs before showing them
+        $('a[data-toggle="tab"][href="#step1-details"]').on('shown.bs.tab', function (e) {
+            //alert("step1");
+            });
+        $('a[data-toggle="tab"][href="#step2-parameters"]').on('shown.bs.tab', function (e) {
+            NewSimulationModal.setTabParametersFields();
+            });
+        $('a[data-toggle="tab"][href="#step3-files"]').on('shown.bs.tab', function (e) {
+            NewSimulationModal.setTabFileGatheringFields();
+        });
+        
+        /*$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var target = $(e.target).attr("href") // activated tab
+            alert(target);
+        });*/
+        
+        $(".next-step").click(function (e) {
+            var active = $('.wizard .nav-tabs li.active');
+            if (active.prop("id")=="new-simulation-modal-tabs-t1"){
+                NewSimulationModal.checkModalFieldsDetailsTab();
+            }else if (active.prop("id")=="new-simulation-modal-tabs-t2"){
+                NewSimulationModal.checkModalFieldsSimulationParametersTab();
+            }else if (active.prop("id")=="new-simulation-modal-tabs-t3"){
+                alert("check tab 3");
+            }
+            //$active.next().removeClass('disabled');
+            //nextTab($active);
+
+        });
+        $(".prev-step").click(function (e) {
+            var $active = $('.wizard .nav-tabs li.active');
+            prevTab($active);
+
+        });
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    setModalFieldsDetailsTab: function(){
+        $("#form-group-nsd-name").removeClass("has-error");
+        $("#form-group-nsd-repetitions").removeClass("has-error");
+        $("#form-group-nsd-simulation-type").removeClass("has-error");
+        $("#alert-danger-step1-details").addClass("hidden");
+        
+        $("#new-simulation-name").val("");
+        $("#new-simulation-repetitions").val("");
+        $('input[name="new-simulation-type"]:checked').each(function(){
+            $(this).prop("checked",false);  
+        });
+        
+        
+        NewSimulationModal.showModal();
+        //show the first tab when opening the modal
+        $('#new-simulation-modal-tabs a:first').tab('show');
+    },
+    
+    checkModalFieldsDetailsTab: function(){
+        var errors = false;
+        
+        var name = $("#new-simulation-name").val();
+        if (name == ""){
+            $("#form-group-nsd-name").addClass("has-error");
+            $('#new-simulation-name').focus();
+            errors = true;
+        }else{
+            $("#form-group-nsd-name").removeClass("has-error");
+        }
+        
+        var repetitions = $("#new-simulation-repetitions").val();
+        if (repetitions == "" || repetitions<=0 || Math.floor(repetitions) != repetitions || !$.isNumeric(repetitions) ){
+            $("#form-group-nsd-repetitions").addClass("has-error");
+            if(!errors){
+                $('#new-simulation-repetitions').focus();
+            }
+            errors = true;
+        }else{
+            $("#form-group-nsd-repetitions").removeClass("has-error");
+        }
+        
+        if ($('input[name="new-simulation-type"]:checked').length == 0){
+            $("#form-group-nsd-simulation-type").addClass("has-error");
+            errors = true;
+        }
+        
+        if (errors){
+            $("#alert-danger-step1-details").removeClass("hidden");
+            $("#alert-danger-step1-details").html("Comprueba los campos marcados en rojo");
+        }else{
+            //this.updateRequest();
+            var active = $('.wizard .nav-tabs li.active');
+            active.next().removeClass('disabled');
+            nextTab(active);
+        }
+    },
+    
+    checkModalFieldsSimulationParametersTab: function(){
+        var active = $('.wizard .nav-tabs li.active');
+        active.next().removeClass('disabled');
+        nextTab(active);
+    },
+    
+    newSimulation: function(projectId){
+        this.projectId = projectId;
+        this.parameterDescriptions = null;
+        this.singleSimulationParameters = new Array();
+        NewParameterSweepSimulation.reset();
+        NewSimulationFileGathering.reset();
+        this.setModalFieldsDetailsTab();
+    },
+    
+    acceptNewSimulation: function(){
+        this.checkModalFields();
+    },
+    
+    postRequest: function(){
+        NewSimulationModal.hideModal();
+    },
+    
+    cancelNewSimulation: function(){
+        this.hideModal();
+    },
+    
+    getIndividualSimulationParameterDescriptions: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/username/projects/" + NewSimulationModal.projectId + "/parameterdescriptions/",
+            method: "GET",
+            //data: {projectId: 1},
+            success : function(data) {
+                NewSimulationModal.parameterDescriptions = new Array();
+                for(var i = 0; i < data.length; i++){
+                    var param = new ParameterDescription(data[i]);
+                    NewSimulationModal.parameterDescriptions.push(param);
+                }
+                NewSimulationModal.fillIndividualSimulationParameterNameSelector(true);
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    printTableIndividualSimulationParameters: function(){
+        var table_body = $("#new-simulation-parameters-single-table > tbody");
+        table_body.empty();
+        for (var i = 0; i < this.singleSimulationParameters.length; i++){
+            var param = this.singleSimulationParameters[i];
+            var table_tr = $("<tr></tr>");
+            var td_number = $("<td>" + (i+1) + "</td>");
+            var td_name = $("<td>" + param.getName() + "</td>");
+            var td_actions = $('<td>' +
+                                    '<button onclick="NewSimulationModal.setViewIndividualSimulationParameter(\'' + param.getName() + '\')" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Ver </button> ' +
+                                    '<button onclick="NewSimulationModal.setEditIndividualSimulationParameter(\'' + param.getName() + '\')" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Editar </button> ' +
+                                    '<button onclick="NewSimulationModal.deleteIndividualSimulationParameter(\'' + param.getName() + '\')" class="btn btn-danger btn-xs" ><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Eliminar </a>' +
+                              '</td>');
+            table_tr.append(td_number);
+            table_tr.append(td_name);
+            table_tr.append(td_actions);
+            table_body.append(table_tr);
+        }
+    },
+    
+    setViewIndividualSimulationParameter: function(name){
+        for (var i = 0; i < NewSimulationModal.singleSimulationParameters.length; i++){
+            var param = NewSimulationModal.singleSimulationParameters[i];
+            if (param.getName()==name){
+                this.fillIndividualSimulationParameterNameSelector(false);
+                $("#new-simulation-ps-name").val(param.getName());
+                $("#new-simulation-nsp-value-type").val(param.getValueType());
+                if (param.getValueType() == "fixed"){
+                    $("#new-simulation-nsp-value").val(param.getValue());
+                }
+                break;
+            }         
+        }
+        //set the title
+        $("#panel-add-parameter-single-title").html("Ver parámetro: " + name);
+
+        //hide the errors
+        $("#form-new-simulation-parameters-single .has-error").each(function(){
+            $(this).removeClass("has-error");
+        });
+        $("#alert-danger-panel-add-parameter-single").addClass("hidden");
+        
+        //disable the form elements
+        $("#form-new-simulation-parameters-single select").each(function(){
+            $(this).prop("disabled", true);
+        });
+        $("#form-new-simulation-parameters-single input").each(function(){
+            $(this).prop("disabled", true);
+        });
+        
+        //show or hide the inputs that depend on the value type
+        if ($("#new-simulation-nsp-value-type").val()=="fixed"){
+            $("#form-group-nsp-value").show();
+        }else{
+            $("#form-group-nsp-value").hide();
+        }
+        
+        //show the right buttons
+        $("#close-parameter-single").removeClass("hidden");
+        $("#update-parameter-single").addClass("hidden");
+        $("#save-parameter-single").addClass("hidden");
+        
+        //show the form
+        $("#panel-add-parameter-single").slideDown("slow");
+    },
+    
+    setEditIndividualSimulationParameter: function(name){
+        this.singleSimulationUpdateParameterName = name;
+        for (var i = 0; i < NewSimulationModal.singleSimulationParameters.length; i++){
+            var param = NewSimulationModal.singleSimulationParameters[i];
+            if (param.getName()==name){
+                this.fillUpdateIndividualSimulationParameterNameSelector(param);
+                $("#new-simulation-ps-name").val(param.getName());
+                $("#new-simulation-nsp-value-type").val(param.getValueType());
+                if (param.getValueType() == "fixed"){
+                    $("#new-simulation-nsp-value").val(param.getValue());
+                }
+                break;
+            }         
+        }
+        //set the title
+        $("#panel-add-parameter-single-title").html("Editar parámetro: " + name);        
+        
+        //hide the errors
+        $("#form-new-simulation-parameters-single .has-error").each(function(){
+            $(this).removeClass("has-error");
+        });
+        $("#alert-danger-panel-add-parameter-single").addClass("hidden");
+        
+        //enable the form elements
+        $("#form-new-simulation-parameters-single select").each(function(){
+            $(this).prop("disabled", false);
+        });
+        $("#form-new-simulation-parameters-single input").each(function(){
+            $(this).prop("disabled", false);
+        });
+        
+        //show or hide the inputs that depend on the value type
+        if ($("#new-simulation-nsp-value-type").val()=="fixed"){
+            $("#form-group-nsp-value").show();
+        }else{
+            $("#form-group-nsp-value").hide();
+        }
+        
+        //show the right buttons
+        $("#close-parameter-single").removeClass("hidden");
+        $("#update-parameter-single").removeClass("hidden");
+        $("#save-parameter-single").addClass("hidden");
+        
+        //show the form
+        $("#panel-add-parameter-single").slideDown("slow");
+    },
+    
+    setAddIndividualSimulationParameter: function(){
+        if (this.parameterDescriptions == null){
+            this.getIndividualSimulationParameterDescriptions();
+        }else{
+            this.fillIndividualSimulationParameterNameSelector(true);
+        }
+        $("#new-simulation-nsp-value-type option:selected").prop("selected", false);
+        $("#new-simulation-nsp-value").val("");
+        //hide the subsections that depend on the value type
+        $("#form-group-nsp-value").hide();
+        
+        //set the title
+        $("#panel-add-parameter-single-title").html("Nuevo parámetro");
+        
+        //hide the errors
+        $("#form-new-simulation-parameters-single .has-error").each(function(){
+            $(this).removeClass("has-error");
+        });
+        $("#alert-danger-panel-add-parameter-single").addClass("hidden");
+        
+        //enable the form elements
+        $("#form-new-simulation-parameters-single select").each(function(){
+            $(this).prop("disabled", false);
+        });
+        $("#form-new-simulation-parameters-single input").each(function(){
+            $(this).prop("disabled", false);
+        });
+        
+        //show the right buttons
+        //$("#close-parameter-single").addClass("hidden");
+        $("#close-parameter-single").removeClass("hidden");
+        $("#update-parameter-single").addClass("hidden");
+        $("#save-parameter-single").removeClass("hidden");
+        
+        //show the form
+        $("#panel-add-parameter-single").slideDown("slow");
+    },
+    
+    deleteIndividualSimulationParameter: function(name){
+        //search and delete the parameter
+        for (var i = 0; i < this.singleSimulationParameters.length; i++){
+            var ss_param = this.singleSimulationParameters[i];
+            if (ss_param.getName()==name){
+                this.singleSimulationParameters.splice(i,1);
+                break;
+            }
+        }
+        //hide the form for the parameter
+        $("#panel-add-parameter-single").slideUp("slow");
+        //refresh the table not to show the deleted parameter
+        this.printTableIndividualSimulationParameters();
+        //enable the new parameter button if now there are available parameters to be added
+        if (this.singleSimulationParameters.length < this.parameterDescriptions.length){
+            $("#add-parameter-single").prop("disabled", false);
+        }
+    },
+    
+    fillIndividualSimulationParameterNameSelector: function(only_available){
+        $("#new-simulation-ps-name").empty();
+        $('<option value="">-- Selecciona el nombre del parámetro --</option>').appendTo("#new-simulation-ps-name");
+        for(var i = 0; i < this.parameterDescriptions.length; i++){
+            var param = this.parameterDescriptions[i];
+            if (only_available){
+                //check if the parameter has not been added before to the simulation
+                var available = true;
+                for (var j = 0; j < this.singleSimulationParameters.length; j++){
+                    var ss_param = this.singleSimulationParameters[j];
+                    if (param.getName() == ss_param.getName()){
+                        available = false;
+                        break;
+                    }
+                }
+                if (available){
+                    $('<option value="' + param.getName() + '">' + param.getName() + '</option>').appendTo("#new-simulation-ps-name");
+                }
+            }else{
+                $('<option value="' + param.getName() + '">' + param.getName() + '</option>').appendTo("#new-simulation-ps-name");
+            }
+        }
+        $("#new-simulation-ps-name").val("");
+    },
+    
+    fillUpdateIndividualSimulationParameterNameSelector: function(param){
+        this.fillIndividualSimulationParameterNameSelector(true);
+        $('<option value="' + param.getName() + '">' + param.getName() + '</option>').appendTo("#new-simulation-ps-name");
+    },    
+    
+    
+    /**
+     * close view a parameter for an individual simulation
+     */
+    closeIndividualSimulationParameter: function(){
+        //hide the form for the parameter
+        $("#panel-add-parameter-single").slideUp("slow");
+    },
+    
+    checkIndividualSimulationParameter: function(){
+        var errors = false;
+        
+        var name = $("#new-simulation-ps-name").val();
+        if (name == ""){
+            $("#form-group-nsp-name").addClass("has-error");
+            $('#new-simulation-ps-name').focus();
+            errors = true;
+        }else{
+            $("#form-group-nsp-name").removeClass("has-error");
+        }
+        
+        var value_type = $("#new-simulation-nsp-value-type").val();
+        if (value_type == ""){
+            $("#form-group-nsp-value-type").addClass("has-error");
+            if(!errors){
+                $('#new-simulation-nsp-value-type').focus();
+            }
+            errors = true;
+        }else{
+            $("#form-group-nsp-value-type").removeClass("has-error");
+        }
+        
+        if (value_type == "fixed"){
+            var value = $("#new-simulation-nsp-value").val();
+            if (value == ""){
+                $("#form-group-nsp-value").addClass("has-error");
+                if (!errors){
+                    $("#new-simulation-nsp-value").focus();
+                }
+                errors = true;
+            }else{
+                //check the value type
+                var ss_param = this.getParameterDescriptionParameter(name);
+                var type = ss_param.getType();
+                var type_error = false;
+                switch(type){
+                    case "STRING_VALUE":
+                        if (typeof value != 'string' && !(value instanceof String)){
+                            type_error = true;
+                        }else{
+                            var possible_values = ss_param.getPossibleValues();
+                            //check if the value is in the list on possible accepted values
+                            if (possible_values !=null && possible_values!="" && possible_values.indexOf(value)==-1){
+                                type_error = true;
+                            }
+                        }
+                        break;                    
+                    case "INTEGER_VALUE":
+                        if (Math.floor(value) != value || !$.isNumeric(value)){
+                            type_error = true;
+                        }else{
+                            if (ss_param.getGreaterThan()!=null &&  value <= ss_param.getGreaterThan()){
+                                type_error = true;
+                            }
+                            if (ss_param.getLessThan()!=null &&  value >= ss_param.getLessThan()){
+                                type_error = true;
+                            }
+                            if (ss_param.getGreaterThanOrEqualTo()!=null &&  value < ss_param.getGreaterThanOrEqualTo()){
+                                type_error = true;
+                            }
+                            if (ss_param.getLessThanOrEqualTo()!=null &&  value > ss_param.getLessThanOrEqualTo()){
+                                type_error = true;
+                            } 
+                        }
+                        break;
+                    case "RATIONAL_VALUE":
+                        if (!$.isNumeric(value)){
+                            type_error = true;
+                        }else{
+                            if (ss_param.getGreaterThan()!=null &&  value <= ss_param.getGreaterThan()){
+                                type_error = true;
+                            }
+                            if (ss_param.getLessThan()!=null &&  value >= ss_param.getLessThan()){
+                                type_error = true;
+                            }
+                            if (ss_param.getGreaterThanOrEqualTo()!=null &&  value < ss_param.getGreaterThanOrEqualTo()){
+                                type_error = true;
+                            }
+                            if (ss_param.getLessThanOrEqualTo()!=null &&  value > ss_param.getLessThanOrEqualTo()){
+                                type_error = true;
+                            } 
+                        }
+                }
+                if (type_error){
+                    $("#form-group-nsp-value").addClass("has-error");
+                    if (!errors){
+                        $("#new-simulation-nsp-value").focus();
+                    }
+                    errors = true;
+                }else{
+                    $("#form-group-nsp-value").removeClass("has-error");
+                }
+            }
+        }
+        
+        if (errors){
+            $("#alert-danger-panel-add-parameter-single").removeClass("hidden");
+            $("#alert-danger-panel-add-parameter-single").html("Comprueba los campos marcados en rojo");
+        }
+        return errors;
+    },
+    
+    /**
+     * update a parameter for an individual simulation
+     */
+    updateIndividualSimulationParameter: function(){
+        //only update if there are no errors in the form
+        var errors = this.checkIndividualSimulationParameter();
+        if (errors){
+            return;
+        }
+        
+        var name = $("#new-simulation-ps-name").val();
+        var value_type = $("#new-simulation-nsp-value-type").val();
+        var value = $("#new-simulation-nsp-value").val();
+        var parameter_data = new Object();
+        parameter_data.name = name;
+        parameter_data.valueType = value_type;
+        if (value_type == "fixed"){
+            parameter_data.value = value;
+        }
+        var param = new ParameterResource(parameter_data);
+        if (this.singleSimulationParameters == null){
+            this.singleSimulationParameters = new Array();
+        }
+        
+        for (var i = 0; i < this.singleSimulationParameters.length; i++){
+            var ss_param = this.singleSimulationParameters[i];
+            //check if it is the parameter that is being updated
+            if (ss_param.getName() == this.singleSimulationUpdateParameterName){
+                ss_param.setName(param.getName());
+                ss_param.setValueType(param.getValueType());
+                ss_param.setValue(param.getValue());
+                break;
+            }
+        }
+        this.singleSimulationUpdateParameterName = null;
+        
+        //hide the form for the parameter
+        $("#panel-add-parameter-single").slideUp("slow");
+        //print the table to update the parameter
+        this.printTableIndividualSimulationParameters();
+    },
+    
+    /**
+     * save a parameter for an individual simulation
+     */
+    saveIndividualSimulationParameter: function(){
+        //only save if there are no errors in the form
+        var errors = this.checkIndividualSimulationParameter();
+        if (errors){
+            return;
+        }
+        var name = $("#new-simulation-ps-name").val();
+        var value_type = $("#new-simulation-nsp-value-type").val();
+        var value = $("#new-simulation-nsp-value").val();
+        var parameter_data = new Object();
+        parameter_data.name = name;
+        parameter_data.valueType = value_type;
+        if (value_type == "fixed"){
+            parameter_data.value = value;
+        }
+        var param = new ParameterResource(parameter_data);
+        if (this.singleSimulationParameters == null){
+            this.singleSimulationParameters = new Array();
+        }
+        this.singleSimulationParameters.push(param);
+        
+        //hide the form for the parameter
+        $("#panel-add-parameter-single").slideUp("slow");
+        //print the table to include the new parameter
+        this.printTableIndividualSimulationParameters();
+        //disable the new parameter button if there are no more available parameters to be added
+        if (this.singleSimulationParameters.length == this.parameterDescriptions.length){
+            $("#add-parameter-single").prop("disabled", true);
+        }
+    },
+    
+    setTabParametersFields: function(){
+        var simulation_type = $('input[name="new-simulation-type"]:checked', '#form-new-simulation-details').val();
+        if (simulation_type == "single"){
+            $("#div-form-new-simulation-parameters-single").show();
+            this.printTableIndividualSimulationParameters();
+            $("#panel-add-parameter-single").hide();
+            $("#div-form-new-simulation-parameters-sweep").hide();
+            
+            //this.getIndividualSimulationParameterDescriptions();
+        }else{
+            $("#div-form-new-simulation-parameters-single").hide();
+            $("#panel-add-parameter-sweep").hide();           
+            NewParameterSweepSimulation.printTableSweepSimulationParameters();
+            $("#div-form-new-simulation-parameters-sweep").show();
+        }
+    },
+    
+    setTabFileGatheringFields: function(){
+        $("#panel-file-gathering-add-file").hide();
+        NewSimulationFileGathering.printTableOutputFileResources();
+        
+    },
+    
+    acceptNewSimulationDetailsTab: function(){
+        this.checkModalFieldsDetailsTab();
+    },
+    
+    getSingleSimulationParameter: function(name){
+        for (var i = 0; i < this.singleSimulationParameters.length; i++){
+            var ss_param = this.singleSimulationParameters[i];
+            if (ss_param.getName() == name){
+                return ss_param;
+            }
+        }
+        return null;
+    },
+    
+    getParameterDescriptionParameter: function(name){
+        for (var i = 0; i < this.parameterDescriptions.length; i++){
+            var ss_param = this.parameterDescriptions[i];
+            if (ss_param.getName() == name){
+                return ss_param;
+            }
+        }
+        return null;
+    }
+    
+};
+

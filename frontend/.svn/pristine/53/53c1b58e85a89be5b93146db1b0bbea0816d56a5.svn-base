@@ -1,0 +1,75 @@
+ #new-simulation-parameters-single-table td,
+ #new-simulation-parameters-sweep-table td,
+ #edit-simulation-parameters-single-table td,
+ #edit-simulation-parameters-sweep-table td{
+     vertical-align: middle;
+ }
+ 
+ #new-simulation-parameters-single-table td div.form-group,
+ #new-simulation-parameters-sweep-table td div.form-group,
+ #edit-simulation-parameters-single-table td div.form-group,
+ #edit-simulation-parameters-sweep-table td div.form-group{
+     margin-bottom: 0px;
+ }
+ 
+  
+ .breadcrumb.list-inline.bigger-size{
+     font-size: 18px;
+     padding-top: 6px;
+     padding-bottom: 0px;
+     margin: 7px 10px;
+ }
+ 
+ h1{
+     /*color: #73879C;*/
+     color: #1b809e;
+ }
+ 
+ .nav-tabs{
+     margin-bottom: 10px;
+ }
+ 
+ div.information-panel{
+     margin: 4px;
+ }
+ 
+ div.information-panel-title.expandable:hover{
+     cursor: pointer;
+ }
+ 
+ div.information-panel-title.expandable > h4{
+    font-size: 1.2em;
+    /*color: #1b809e;*/
+    color: #73879C;
+    border-bottom: 1px solid;
+    padding-bottom: 5px;
+}
+
+ 
+ div.information-panel-title.expandable > h4 > span.glyphicon-triangle-bottom,
+ div.information-panel-title.expandable > h4 > span.glyphicon-triangle-top{
+    font-size: 0.9em;
+}
+
+ div.information-panel-title.expandable > span.title{
+    font-size: 1.1em;
+    /*font-weight: normal;*/
+    font-weight: 600;
+    color: #73879C;
+    border-bottom: 1px solid;
+    padding-bottom: 3px;
+    margin: 0px;
+ }
+ 
+ div.information-panel div.information-panel-content{
+     margin: 0px 4px;
+ }
+ 
+ span.title{
+     margin: 5px 0px;
+     /*font-weight: 700;*/
+     font-weight: normal;
+     color: #1b809e;
+     /*color: #73879C;*/
+     display:block;
+ }

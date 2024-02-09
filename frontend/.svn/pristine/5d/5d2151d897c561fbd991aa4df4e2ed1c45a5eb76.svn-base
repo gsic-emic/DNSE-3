@@ -1,0 +1,788 @@
+/**
+ * Manager for the modal dialog that manage the output file structures
+ */
+var NewSimulationFileGathering = {
+    
+    /**
+     * the output file structures that are available for the simulation
+     */
+    outputFileStructures: null,
+    
+     /**
+     * the output files that are available for the simulation
+     */
+    outputFiles: null,
+    
+    
+    /**
+     * the output file resources that the user has added to the simulation from those available
+     */
+    outputFileResources: null,
+    
+    /**
+     * it keeps the status of the output files that the user can choose
+     */
+    outputFilesChoose: null,
+    
+    /**
+     * the name of the structure of the output file resource that is being updated in the simulation
+     */
+    outputFileResourceUpdateStructureName: null,
+    
+    /**
+     * the name for each output file of the output file resource
+     */
+    outputFileResourceOutputFileNames: null,
+    
+    init: function(){
+        
+        $("#file-gathering-af-structure").change(function(){
+            NewSimulationFileGathering.setOutputFileStructureInfo();
+        });
+        
+        //onclick event on the add parameter button
+        $("#file-gathering-add-file").click(function(){
+            NewSimulationFileGathering.setAddOutputFileResource();
+        });
+        
+        //onclick event on the close parameter button
+        $("#close-add-file").click(function(){
+            NewSimulationFileGathering.closeOutputFileResource();
+        });
+        
+        //onclick event on the update parameter button
+        $("#update-add-file").click(function(){
+            NewSimulationFileGathering.updateOutputFileResource();
+        });
+        
+        //onclick event on the save parameter button
+        $("#save-add-file").click(function(){
+            NewSimulationFileGathering.saveOutputFileResource();
+        });
+
+        //onclick event on the add file name button
+        $("#fgaf-output-files-names-add").click(function(){
+            NewSimulationFileGathering.outputFileResourceOutputFileNames.push("");
+            NewSimulationFileGathering.printOutputFileNamesInputs(NewSimulationFileGathering.outputFileResourceOutputFileNames);
+        });
+        
+        $("#new-simulation-file-gathering-ofs-all").click(function(){
+            NewSimulationFileGathering.changeOutputFileAlls();
+        });
+            
+    },
+    
+    
+    changeOutputFileAlls: function(){
+        if ($("#new-simulation-file-gathering-ofs-all").is(":checked")){
+            $("#new-simulation-file-gathering-table input[type='checkbox']").each(function(){
+                $(this).prop("checked", true);
+                for (var i = 0; i < NewSimulationFileGathering.outputFilesChoose.length; i++){
+                    NewSimulationFileGathering.outputFilesChoose[i].chosen = true;
+                }
+            });
+        }else{
+            $("#new-simulation-file-gathering-table input[type='checkbox']").each(function(){
+                $(this).prop("checked", false);
+                for (var i = 0; i < NewSimulationFileGathering.outputFilesChoose.length; i++){
+                    NewSimulationFileGathering.outputFilesChoose[i].chosen = false;
+                }
+            });
+        }
+    },
+    
+    setOutputFileStructureInfo: function(){
+        var output_file_structure_name = $("#file-gathering-af-structure").val();
+        if (output_file_structure_name == ""){
+            //none of the structures has been selected
+            //clear the multiline and variable name imputs and hide these sections of the form
+            $('input[name="file-gathering-af-multiline"]').each(function(){
+                $(this).prop("checked", false)
+            });
+            $("#form-group-fgaf-multiline").hide();
+            $("#form-group-fgaf-output-variables-names").empty();
+            $("#form-group-fgaf-output-variables").hide();
+            $("#form-group-fgaf-output-files").hide();
+        }else{
+            var outFileStruct = this.getOutputFileSstructure(output_file_structure_name);
+            if (outFileStruct.isMultiLine()){
+                $('input[name="file-gathering-af-multiline"][value="multiline"]').prop("checked", true);
+            }else{
+                $('input[name="file-gathering-af-multiline"][value="singleline"]').prop("checked", true);
+            }       
+            $('input[name="file-gathering-af-multiline"]').each(function(){
+               $(this).prop("disabled",true); 
+            });
+            this.printVariableNameInputs(outFileStruct.getOutputVariables());
+            
+            $("#form-group-fgaf-multiline").show();
+            $("#form-group-fgaf-output-variables").show();
+            $("#form-group-fgaf-output-files").show();
+        }
+        //reset the file names
+        this.outputFileResourceOutputFileNames = new Array();
+        this.outputFileResourceOutputFileNames.push("");
+        this.printOutputFileNamesInputs(this.outputFileResourceOutputFileNames);
+    },
+    
+    reset: function(){
+        this.outputFileStructures = null;
+        this.outputFiles = null;
+        this.outputFileResources = null;
+        this.outputFileResourceOutputFileNames = new Array();
+        this.outputFilesChoose = new Array();
+        this.resetTableOutputFiles();
+    },
+    
+    getOutputFileStructures: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/username/projects/" + NewSimulationModal.projectId + "/outputfilestructures/",
+            method: "GET",
+            //data: {projectId: 1},
+            success : function(data) {
+                NewSimulationFileGathering.outputFileStructures = new Array();
+                for(var i = 0; i < data.length; i++){
+                    var param = new OutputFileStructure(data[i]);
+                    NewSimulationFileGathering.outputFileStructures.push(param);
+                }
+                NewSimulationFileGathering.fillOutputFileResourceStructureNameSelector(true);
+            },
+            error : function(xhr, status) {
+                //hide the dialog and show the error
+                NewSimulationModal.hideModal();
+                manageRequestError(xhr, status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+           
+    /*printTableOutputFileResources: function(){
+        var table_body = $("#new-simulation-file-gathering-table > tbody");
+        table_body.empty();
+        for (var i = 0; i < this.outputFileResources.length; i++){
+            var param = this.outputFileResources[i];
+            var outputFileStructure = param.getOutputFileStructure();
+            var table_tr = $("<tr></tr>");
+            var td_number = $("<td>" + (i+1) + "</td>");
+            var td_name = $("<td>" + outputFileStructure.getName() + "</td>");
+            var td_actions = $('<td>' +
+                                    '<button onclick="NewSimulationFileGathering.setViewOutputFileResource(\'' + outputFileStructure.getName() + '\')" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Ver </button> ' +
+                                    '<button onclick="NewSimulationFileGathering.setEditOutputFileResource(\'' + outputFileStructure.getName() + '\')" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Editar </button> ' +
+                                    '<button onclick="NewSimulationFileGathering.deleteOutputFileResource(\'' + outputFileStructure.getName() + '\')" class="btn btn-danger btn-xs" ><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Eliminar </a>' +
+                              '</td>');
+            table_tr.append(td_number);
+            table_tr.append(td_name);
+            table_tr.append(td_actions);
+            table_body.append(table_tr);
+        }
+    },*/
+    
+    resetTableOutputFiles: function(){
+        var table_body = $("#new-simulation-file-gathering-table > tbody");
+        table_body.empty();
+    },
+    
+    printTableOutputFiles: function(){
+        var all_checked = true;
+        var table_body = $("#new-simulation-file-gathering-table > tbody");
+        table_body.empty();
+        for (var i = 0; i < this.outputFilesChoose.length; i++){
+            var output_file_choose = this.outputFilesChoose[i];
+            var outputFile = this.getOutputFile(output_file_choose.name);
+            var table_tr = $("<tr></tr>");
+            var td_chosen = $('<td><input type="checkbox" name="new-simulation-file-gathering-ofs" id="new-simulation-file-gathering-ofs-' + i + '" value="' + outputFile.getOutputFileName() + '" onchange="NewSimulationFileGathering.changeOutputFile(\'' + outputFile.getOutputFileName() + '\',this)" ></td>');
+            var td_number = $("<td>" + (i+1) + "</td>");
+            var td_name = $("<td>" + outputFile.getOutputFileName() + "</td>");
+            var td_tipo = $("<td>" + OutputFileType.getDescription(outputFile.getType()) + "</td>");
+            var td_vars = $("<td>" + outputFile.getOutputFileStructure().getOutputVariables() + "</td>");
+            table_tr.append(td_chosen);
+            table_tr.append(td_number);
+            table_tr.append(td_name);
+            table_tr.append(td_tipo);
+            table_tr.append(td_vars);
+            table_body.append(table_tr);
+            if (output_file_choose.chosen){
+                $("#new-simulation-file-gathering-ofs-"+i).prop("checked", true);
+            }else{
+                all_checked = false;
+            }
+        }
+        if (all_checked){
+            $("#new-simulation-file-gathering-ofs-all").prop("checked", true);
+        }else{
+            $("#new-simulation-file-gathering-ofs-all").prop("checked", false);
+        }
+    },
+    
+    printVariableNameInputs: function(values){
+        $("#form-group-fgaf-output-variables-names").empty();
+        for (var i = 0; i < values.length; i++){
+            var html_fixed = '<div id="form-group-fgaf-output-variables-name-' + i + '" class="form-group col-md-6">' +
+                                '<input type="text" value="' + values[i] + '" class="form-control" id="new-simulation-output-variables-name-' + i + '" name="new-simulation-output-variables-name[]" disabled="disabled" placeholder="Nombre">' +
+                             '</div>';
+            $("#form-group-fgaf-output-variables-names").append(html_fixed);
+        }
+    },
+    
+    printOutputFileNamesInputs: function(values){
+        $("#form-group-fgaf-output-files-names").empty();
+        for (var i = 0; i < values.length; i++){
+            var html_fixed = '<div id="form-group-fgaf-output-files-name-' + i + '" class="form-group col-md-6">' + 
+                                '<div class="input-group">' +
+                                    '<input type="text" value="' + values[i] + '" class="form-control" id="new-simulation-output-files-name-' + i + '" name="new-simulation-output-files-name[]" placeholder="Nombre" onchange="NewSimulationFileGathering.setOutputFileNameInput(\'' + i + '\')">' +
+                                    '<span class="input-group-btn">' +                                   
+                                        '<button onclick="NewSimulationFileGathering.deleteOutputFileNameInput(\'' + i + '\')" class="btn btn-default" type="button"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>' +
+                                    '</span>' +
+                                '</div>' +
+                             '</div>';
+            $("#form-group-fgaf-output-files-names").append(html_fixed);
+        }
+    },
+    
+    printViewOutputFileNamesInputs: function(values){
+        $("#form-group-fgaf-output-files-names").empty();
+        for (var i = 0; i < values.length; i++){           
+            var html_fixed = '<div id="form-group-fgaf-output-files-name-' + i + '" class="form-group col-md-6">' + 
+                                '<input type="text" value="' + values[i] + '" class="form-control" id="new-simulation-output-files-name-' + i + '" name="new-simulation-output-files-name[]" placeholder="Nombre">' +
+                             '</div>';
+            $("#form-group-fgaf-output-files-names").append(html_fixed);
+        }
+    },
+    
+    setOutputFileNameInput: function(index){
+        this.outputFileResourceOutputFileNames[index] = $("#new-simulation-output-files-name-" + index).val();
+    },
+    
+    /**
+     * delete a output file name input
+     */
+    deleteOutputFileNameInput: function(index){
+       this.outputFileResourceOutputFileNames.splice(index,1); 
+       //once it has been deleted, we print again the inputs
+       this.printOutputFileNamesInputs(this.outputFileResourceOutputFileNames);
+    },
+    
+    setViewOutputFileResource: function(name){
+        var param = this.getOutputFileResource(name);
+        var output_file_structure = param.getOutputFileStructure();
+        
+        //set the form elements
+        this.fillOutputFileResourceStructureNameSelector(false);
+        $("#file-gathering-af-structure").val(output_file_structure.getName());
+        var multiline = output_file_structure.isMultiLine();
+        if (multiline){
+            $('input[name="file-gathering-af-multiline"][value="multiline"]').prop("checked", true);
+        }else{
+            $('input[name="file-gathering-af-multiline"][value="singleline"]').prop("checked", true);
+        }       
+        this.printVariableNameInputs(output_file_structure.getOutputVariables());
+        this.printViewOutputFileNamesInputs(param.getOutputFileName());
+        
+        //show the subsections that depend on the output file structure
+        $("#form-group-fgaf-multiline").show();
+        $("#form-group-fgaf-output-variables").show();
+
+        //set the title
+        $("#panel-file-gathering-add-file-title").html("Ver fichero: " + name);
+
+        //hide the errors
+        $("#form-file-gathering-add-file .has-error").each(function(){
+            $(this).removeClass("has-error");
+        });
+        $("#alert-danger-panel-file-gathering-add-file").addClass("hidden");
+        
+        //disable the form elements
+        $("#form-file-gathering-add-file select").each(function(){
+            $(this).prop("disabled", true);
+        });
+        $("#form-file-gathering-add-file input").each(function(){
+            $(this).prop("disabled", true);
+        });
+        
+        //hide the add buttons
+        $("#form-group-fgaf-output-files-button").hide();
+        
+        //show the right buttons
+        $("#close-add-file").removeClass("hidden");
+        $("#update-add-file").addClass("hidden");
+        $("#save-add-file").addClass("hidden");
+        
+        //show the form
+        $("#panel-file-gathering-add-file").slideDown("slow");
+    },
+    
+    setEditOutputFileResource: function(name){
+        this.outputFileResourceUpdateStructureName = name;       
+        var param = this.getOutputFileResource(name);
+        var output_file_structure = param.getOutputFileStructure();
+        
+        //set the form elements
+        this.fillUpdateOutputFileResourceStructureNameSelector(param);
+        
+        $("#file-gathering-af-structure").val(output_file_structure.getName());
+        var multiline = output_file_structure.isMultiLine();
+        if (multiline){
+            $('input[name="file-gathering-af-multiline"][value="multiline"]').prop("checked", true);
+        }else{
+            $('input[name="file-gathering-af-multiline"][value="singleline"]').prop("checked", true);
+        }       
+        this.printVariableNameInputs(output_file_structure.getOutputVariables());
+        this.printOutputFileNamesInputs(param.getOutputFileName());
+
+        //show the subsections that depend on the output file structure
+        $("#form-group-fgaf-multiline").show();
+        $("#form-group-fgaf-output-variables").show();
+        
+        //set the title
+        $("#panel-file-gathering-add-file-title").html("Editar fichero: " + name);  
+        
+        //hide the errors
+        $("#form-file-gathering-add-file .has-error").each(function(){
+            $(this).removeClass("has-error");
+        });
+        $("#alert-danger-panel-file-gathering-add-file").addClass("hidden");
+        
+        //enable the form elements
+        $("#form-file-gathering-add-file select").each(function(){
+            $(this).prop("disabled", false);
+        });
+        $("#form-file-gathering-add-file form-group-fgaf-output-files input").each(function(){
+            $(this).prop("disabled", false);
+        });
+        
+        //show the add buttons
+        $("#form-group-fgaf-output-files-button").show();
+        
+        //show the right buttons
+        $("#close-add-file").removeClass("hidden");
+        $("#update-add-file").removeClass("hidden");
+        $("#save-add-file").addClass("hidden");
+        
+        //show the form
+        $("#panel-file-gathering-add-file").slideDown("slow");
+    },
+    
+    checkFileGatheringFields: function(){
+        var errors = false;
+        var number_chosen = 0;
+        for (var i = 0; i < this.outputFilesChoose.length; i++){
+            if (this.outputFilesChoose[i].chosen){
+                number_chosen++;
+            }
+        }
+        if (number_chosen == 0){
+            errors = true;
+        }
+        if (errors){
+            $("#alert-danger-panel-output-files").removeClass("hidden");
+            $("#alert-danger-panel-output-files").html("Selecciona al menos un fichero de salida");
+        }else{
+            $("#alert-danger-panel-output-files").addClass("hidden");
+        }
+        return errors;
+    },
+    
+    setFileGatheringFields: function(simulation_type, repetitions){
+        if (NewSimulationFileGathering.outputFiles == null){
+            $.ajax({
+                dataType: "json",
+                url: getBaseApiUrl() + "/users/username/projects/" + NewSimulationModal.projectId + "/outputfiles/",
+                method: "GET",
+                //data: {projectId: 1},
+                success : function(data) {
+                    NewSimulationFileGathering.outputFiles = new Array();
+                    for(var i = 0; i < data.length; i++){
+                        var output_file_data = new Object();
+                        output_file_data.outputFileName = data[i].outputFileName;
+                        output_file_data.outputFileStructure = new OutputFileStructure(data[i].outputFileStructure);
+                        output_file_data.type = data[i].type;
+                        
+                        var param = new OutputFileResource(output_file_data);
+                        NewSimulationFileGathering.outputFiles.push(param);
+                    }
+
+                    NewSimulationFileGathering.outputFilesChoose = new Array();
+                    for(var i = 0; i < data.length; i++){
+                        //show only the files of type "RESULT_FILE"!!
+                        if (simulation_type == "parameter-sweep" && data[i].type == "RESULT_FILE"){
+                            var output_file_data = new Object();
+                            output_file_data.name = data[i].outputFileName;
+                            output_file_data.chosen = false;
+                            NewSimulationFileGathering.outputFilesChoose.push(output_file_data);
+                        }else if (simulation_type == "single"){
+                            if (data[i].type == "RESULT_FILE" || repetitions == 1){
+                                var output_file_data = new Object();
+                                output_file_data.name = data[i].outputFileName;
+                                output_file_data.chosen = false;
+                                NewSimulationFileGathering.outputFilesChoose.push(output_file_data);
+                            }
+                        }
+                    }
+
+                    NewSimulationFileGathering.printTableOutputFiles();
+                    //NewSimulationFileGathering.fillOutputFileResourceStructureNameSelector(true);
+                },
+                error : function(xhr, status) {
+                    //hide the dialog and show the error
+                    NewSimulationModal.hideModal();
+                    manageRequestError(xhr, status);
+                },
+
+                // código a ejecutar sin importar si la petición falló o no
+                complete : function(xhr, status) {
+                //alert(status);
+                }
+            });
+        }else{
+            //keep a copy of the previous values for the selected output files
+            var oldOutputFilesChoose = new Array();
+            for (var i = 0; i < this.outputFilesChoose.length; i++){
+                oldOutputFilesChoose.push(this.outputFilesChoose[i]);
+            }
+            
+            this.outputFilesChoose = new Array();
+            for(var i = 0; i < this.outputFiles.length; i++){
+                //show only the files of type "RESULT_FILE"!!
+                if (simulation_type == "parameter-sweep" && this.outputFiles[i].getType() == "RESULT_FILE"){
+                    var output_file_data = new Object();
+                    output_file_data.name = this.outputFiles[i].getOutputFileName();
+                    var chosen = false;
+                    for (var j = 0; j < oldOutputFilesChoose.length; j++){
+                        if (oldOutputFilesChoose[j].name == output_file_data.name){
+                            chosen = oldOutputFilesChoose[j].chosen;
+                            break;
+                        }
+                    }
+                    output_file_data.chosen = chosen;
+                    this.outputFilesChoose.push(output_file_data);
+                }else if (simulation_type == "single"){
+                    if (this.outputFiles[i].getType() == "RESULT_FILE" || repetitions == 1){
+                        var output_file_data = new Object();
+                        output_file_data.name = this.outputFiles[i].getOutputFileName();
+                        var chosen = false;
+                        for (var j = 0; j < oldOutputFilesChoose.length; j++){
+                            if (oldOutputFilesChoose[j].name == output_file_data.name){
+                                chosen = oldOutputFilesChoose[j].chosen;
+                                break;
+                            }
+                        }
+                        output_file_data.chosen = chosen;
+                        this.outputFilesChoose.push(output_file_data);
+                    }
+                }
+            }
+                    
+            this.printTableOutputFiles();
+        }
+    },
+        
+    setAddOutputFileResource: function(){
+        if (NewSimulationFileGathering.outputFileStructures == null){
+            this.getOutputFileStructures();
+        }else{
+            this.fillOutputFileResourceStructureNameSelector(true);
+        }
+        //reset the different values
+        $("#file-gathering-af-structure option:selected").prop("selected", false);
+        $('input[name="file-gathering-af-multiline"]').each(function(){
+            $(this).prop("checked", false);
+        });
+        var var_name_inputs = new Array();
+        this.printVariableNameInputs(var_name_inputs);
+        this.outputFileResourceOutputFileNames = new Array();
+        this.outputFileResourceOutputFileNames.push("");
+        this.printOutputFileNamesInputs(this.outputFileResourceOutputFileNames);
+        
+        //hide the subsections that depend on the output file structure
+        $("#form-group-fgaf-multiline").hide();
+        $("#form-group-fgaf-output-variables").hide();
+        $("#form-group-fgaf-output-files").hide();
+        
+        //set the title
+        $("#panel-file-gathering-add-file-title").html("Nuevo parámetro");
+        
+        //hide the errors
+        $("#form-file-gathering-add-file .has-error").each(function(){
+            $(this).removeClass("has-error");
+        });
+        $("#alert-danger-panel-file-gathering-add-file").addClass("hidden");
+        
+        //enable the form elements
+        $("#form-file-gathering-add-file select").each(function(){
+            $(this).prop("disabled", false);
+        });
+        $("#form-file-gathering-add-file input").each(function(){
+            $(this).prop("disabled", false);
+        });
+        
+        //show the add buttons
+        $("#form-group-fgaf-output-files-button").show();
+        
+        //show the right buttons
+        $("#close-add-file").removeClass("hidden");
+        $("#update-add-file").addClass("hidden");
+        $("#save-add-file").removeClass("hidden");
+        
+        //show the form
+        $("#panel-file-gathering-add-file").slideDown("slow");
+    },
+      
+    deleteOutputFileResource: function(name){
+        //search and delete the output file resource
+        for (var i = 0; i < this.outputFileResources.length; i++){
+            var out_file_resource = this.outputFileResources[i];
+            if (out_file_resource.getOutputFileStructure().getName()==name){
+                this.outputFileResources.splice(i,1);
+                break;
+            }
+        }
+        //hide the form for the parameter
+        $("#panel-file-gathering-add-file").slideUp("slow");
+        //refresh the table not to show the deleted parameter
+        this.printTableOutputFileResources();
+        //enable the new output file resource button if no there are available output file structures to be added
+        if (this.outputFileResources.length < this.outputFileStructures.length){
+            $("#file-gathering-add-file").prop("disabled", false);
+        }
+    },
+    
+    fillOutputFileResourceStructureNameSelector: function(only_available){
+        $("#file-gathering-af-structure").empty();
+        $('<option value="">-- Selecciona la estructura del fichero --</option>').appendTo("#file-gathering-af-structure");
+        for(var i = 0; i < this.outputFileStructures.length; i++){
+            var out_file_struct = this.outputFileStructures[i];
+            if (only_available){
+                //check if the parameter has not been added before to the simulation
+                var available = true;
+                for (var j = 0; j < this.outputFileResources.length; j++){
+                    var out_file_res = this.outputFileResources[j];
+                    if (out_file_struct.getName() == out_file_res.getOutputFileStructure().getName()){
+                        available = false;
+                        break;
+                    }
+                }
+                if (available){
+                    $('<option value="' + out_file_struct.getName() + '">' + out_file_struct.getName() + '</option>').appendTo("#file-gathering-af-structure");
+                }
+            }else{
+                $('<option value="' + out_file_struct.getName() + '">' + out_file_struct.getName() + '</option>').appendTo("#file-gathering-af-structure");
+            }
+        }
+        $("#file-gathering-af-structure").val("");
+    },
+    
+    fillUpdateOutputFileResourceStructureNameSelector: function(param){
+        this.fillOutputFileResourceStructureNameSelector(true);
+        var out_file_struct = param.getOutputFileStructure();
+        $('<option value="' + out_file_struct.getName() + '">' + out_file_struct.getName() + '</option>').appendTo("#file-gathering-af-structure");
+    },
+    
+    /**
+     * close view a output file resource
+     */
+    closeOutputFileResource: function(){
+        //hide the form for the parameter
+        $("#panel-file-gathering-add-file").slideUp("slow");
+    },
+    
+        
+    checkOutputFileResource: function(){
+        var errors = false;
+        
+        var file_structure_name = $("#file-gathering-af-structure").val();
+        if (file_structure_name == ""){
+            $("#form-group-fgaf-structure").addClass("has-error");
+            $('#file-gathering-af-structure').focus();
+            errors = true;
+        }else{
+            $("#form-group-fgaf-structure").removeClass("has-error");
+        }
+        
+        $("#form-group-fgaf-output-files > label.control-label").removeClass("label-error");
+        $('input[type="text"][name="new-simulation-output-files-name[]"]').each(function(index, item){
+            var value = $(this).val();
+            if (value == ""){
+                $("#form-group-fgaf-output-files > label.control-label").addClass("label-error");
+                $("#form-group-fgaf-output-files-name-" + index).addClass("has-error");
+                if (!errors){
+                    $("#new-simulation-output-files-name-" + index).focus();
+                }
+                errors = true;
+            }else{
+                //check if the name for the file is valid (it doesn't contain any forbidden characters
+                $("#form-group-fgaf-output-files-name-" + index).removeClass("has-error");
+            }
+        });
+        
+        if (errors){
+            $("#alert-danger-panel-file-gathering-add-file").removeClass("hidden");
+            $("#alert-danger-panel-file-gathering-add-file").html("Comprueba los campos marcados en rojo");
+        }
+        return errors;
+    },
+    
+    changeOutputFile: function(name, input){
+        var output_file = this.getOutputFileChoose(name);
+        if ($(input).is(":checked")){
+            output_file.chosen = true;
+        }else{
+            output_file.chosen = false;
+        }
+        //if all the checkbox are checked, we also check the checker for all of them
+        if ($('input[type="checkbox"][name="new-simulation-file-gathering-ofs"]:checked').length == this.outputFilesChoose.length){
+            $("#new-simulation-file-gathering-ofs-all").prop("checked",true);
+        }else{
+            $("#new-simulation-file-gathering-ofs-all").prop("checked",false);
+        }
+    },
+    
+     /**
+     * update a output file resource
+     */
+    updateOutputFileResource: function(){
+        //only update if there are no errors in the form
+        var errors = this.checkOutputFileResource();
+        if (errors){
+            return;
+        }
+        
+        var file_structure_name = $("#file-gathering-af-structure").val();
+        var multiline = false;
+        if ($('input[name="file-gathering-af-multiline"][value="multiline"]').is(":checked")){
+            multiline = true;
+        }
+        var output_vars = new Array();
+        $('input[type="text"][name="new-simulation-output-variables-name[]"]').each(function(index, item){
+            var output_var = $(this).val();
+            output_vars.push(output_var);
+        });
+        var output_file_names = new Array();
+        $('input[type="text"][name="new-simulation-output-files-name[]"]').each(function(index, item){
+            var file_name = $(this).val();
+            output_file_names.push(file_name);
+        });
+        
+        var output_file_res_data = new Object();
+        output_file_res_data.outputFileNames = output_file_names;
+        var output_file_struct_data = new Object();
+        output_file_struct_data.name = file_structure_name;
+        output_file_struct_data.multiLine = multiline;
+        output_file_struct_data.outputVariables = output_vars;        
+        output_file_res_data.outputFileStructure = new OutputFileStructure(output_file_struct_data);
+        
+        var outputFileResObj = new OutputFileResource(output_file_res_data);
+        if (this.outputFileResources == null){
+            this.outputFileResources = new Array();
+        }
+        
+        //update the values
+        var output_file_res = this.getOutputFileResource(this.outputFileResourceUpdateStructureName);
+        output_file_res.setOutputFileNames(outputFileResObj.getOutputFileName());
+        output_file_res.setOutputFileStructure(outputFileResObj.getOutputFileStructure());
+                
+        this.outputFileResourceUpdateStructureName = null;
+        
+        //hide the form for the parameter
+        $("#panel-file-gathering-add-file").slideUp("slow");
+        //print the table to update the parameter
+        this.printTableOutputFileResources();
+    },
+    
+    /**
+     * save a output file resource
+     */
+    saveOutputFileResource: function(){
+        //only save if there are no errors in the form
+        var errors = this.checkOutputFileResource();
+        if (errors){
+            return;
+        }
+        
+        var file_structure_name = $("#file-gathering-af-structure").val();
+        var multiline = false;
+        if ($('input[name="file-gathering-af-multiline"][value="multiline"]').is(":checked")){
+            multiline = true;
+        }
+        var output_vars = new Array();
+        $('input[type="text"][name="new-simulation-output-variables-name[]"]').each(function(index, item){
+            var output_var = $(this).val();
+            output_vars.push(output_var);
+        });
+        var output_file_names = new Array();
+        $('input[type="text"][name="new-simulation-output-files-name[]"]').each(function(index, item){
+            var file_name = $(this).val();
+            output_file_names.push(file_name);
+        });
+        
+        var output_file_res_data = new Object();
+        output_file_res_data.outputFileNames = output_file_names;
+        var output_file_struct_data = new Object();
+        output_file_struct_data.name = file_structure_name;
+        output_file_struct_data.multiLine = multiline;
+        output_file_struct_data.outputVariables = output_vars;
+        output_file_res_data.outputFileStructure = new OutputFileStructure(output_file_struct_data);
+        
+        var outputFileResObj = new OutputFileResource(output_file_res_data);
+        if (this.outputFileResources == null){
+            this.outputFileResources = new Array();
+        }
+        //add the output file resource to the array
+        this.outputFileResources.push(outputFileResObj);
+        
+        //hide the form for the parameter
+        $("#panel-file-gathering-add-file").slideUp("slow");
+        //print the table to include the new parameter
+        this.printTableOutputFileResources();
+        //disable the new parameter button if there are no more available parameters to be added
+        if (this.outputFileResources.length == this.outputFileStructures.length){
+            $("#file-gathering-add-file").prop("disabled", true);
+        }
+    },
+    
+    getOutputFileChoose: function(name){
+        for (var i = 0; i < this.outputFilesChoose.length; i++){
+            var out_file = this.outputFilesChoose[i];
+            if (out_file.name == name){
+                return out_file;
+            }
+        }
+        return null;
+    },
+    
+    getOutputFile: function(name){
+        for (var i = 0; i < this.outputFiles.length; i++){
+            var out_file = this.outputFiles[i];
+            if (out_file.getOutputFileName()== name){
+                return out_file;
+            }
+        }
+        return null;
+    },
+    
+    getOutputFileResource: function(name){
+        for (var i = 0; i < this.outputFileResources.length; i++){
+            var out_file_res = this.outputFileResources[i];
+            if (out_file_res.getOutputFileStructure().getName() == name){
+                return out_file_res;
+            }
+        }
+        return null;
+    },
+    
+    getOutputFileSstructure: function(name){
+        for (var i = 0; i < this.outputFileStructures.length; i++){
+            var out_file_struct = this.outputFileStructures[i];
+            if (out_file_struct.getName() == name){
+                return out_file_struct;
+            }
+        }
+        return null;
+    }
+}
+
+

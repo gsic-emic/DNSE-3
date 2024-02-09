@@ -1,0 +1,22 @@
+<?php
+
+//start the session
+session_start();
+//set the session variables if it is possible
+if (isset($_POST["loginUsername"]) && !empty($_POST["loginUsername"])){
+    $_SESSION["username"] = $_POST["loginUsername"];
+}
+if (isset($_POST["loginPassword"]) && !empty($_POST["loginPassword"])){
+    $_SESSION["password"] = $_POST["loginPassword"];
+}
+
+//redirect depending on the login result
+if (isset($_SESSION["username"]) && !empty($_SESSION["username"]) && isset($_SESSION["password"]) && !empty($_SESSION["password"])){
+    header('Location: '. "../view/main.php");
+}else{
+    header('Location: '. "../view/index.php");
+}
+
+
+
+?>

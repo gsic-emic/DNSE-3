@@ -1,0 +1,84 @@
+/**
+ * The description of a parameter for a simulation
+ */
+var ParameterResource = function(parameters){
+	
+    var data = parameters;
+	
+    this.getData = function(){
+        return data;
+    },
+    
+    this.getName = function(){
+        return data.name;
+    },
+    
+    this.setName = function(name){
+        data.name = name;
+    },
+    
+    this.getValueType = function(){
+        return data.valueType;
+    },
+    
+    this.setValueType = function(valueType){
+        data.valueType = valueType;
+    },
+    
+    this.getValue = function(){
+        return data.value;
+    },
+    
+    this.setValue = function(value){
+        data.value = value;
+    },
+    
+    this.getValues = function(){
+        return data.values;
+    },
+    
+    this.setValues = function(values){
+        data.values = values;
+    },
+    
+    this.getMinValue = function(){
+        return data.minValue;
+    },
+    
+    this.setMinValue = function(minValue){
+        data.minValue = minValue;
+    },
+    
+    this.getMaxValue = function(){
+        return data.maxValue;
+    },
+    
+    this.setMaxValue = function(maxValue){
+        data.maxValue = maxValue;
+    },
+    
+    this.getStep = function(){
+        return data.step;
+    },
+    
+    this.setStep = function(step){
+        data.step = step;
+    },
+    
+    this.getUnits = function(){
+        return data.units;
+    },
+    
+    this.setUnits = function(units){
+        data.units = units;
+    },
+    
+    this.getRamdom = function(){
+        return data.random;
+    },
+    
+    this.setRandom = function(random){
+        data.random = random;
+    }
+    
+}

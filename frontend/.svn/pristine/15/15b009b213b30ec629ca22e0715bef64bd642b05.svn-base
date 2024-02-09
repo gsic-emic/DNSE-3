@@ -1,0 +1,71 @@
+/**
+ * CSS for the simulationProject screen
+ */
+.nav-tabs{
+     margin-bottom: 10px;
+ }
+ 
+ div.information-panel{
+     margin: 4px;
+ }
+ 
+ div.information-panel-title.expandable:hover{
+     cursor: pointer;
+ }
+ 
+ div.information-panel-title.expandable > h4{
+    font-size: 1.2em;
+    /*color: #1b809e;*/
+    color: #73879C;
+    border-bottom: 1px solid;
+    padding-bottom: 5px;
+}
+
+ 
+ div.information-panel-title.expandable > h4 > span.glyphicon-triangle-bottom,
+ div.information-panel-title.expandable > h4 > span.glyphicon-triangle-top{
+    font-size: 0.9em;
+}
+
+ div.information-panel-title.expandable > span.title{
+    font-size: 1.1em;
+    /*font-weight: normal;*/
+    font-weight: 600;
+    color: #73879C;
+    border-bottom: 1px solid;
+    padding-bottom: 3px;
+    margin: 0px;
+ }
+ 
+ div.information-panel div.information-panel-content{
+     margin: 0px 4px;
+ }
+ 
+ span.title{
+     margin: 5px 0px;
+     /*font-weight: 700;*/
+     font-weight: normal;
+     color: #1b809e;
+     /*color: #73879C;*/
+     display:block;
+ }
+
+ table td.status{
+     width: 65px;
+     text-align: center;
+     vertical-align: middle !important;
+     font-size: 1.5em;
+ }
+
+ table td.actions{
+     /*width: 143px;*/
+     width: 210px;
+ }
+ 
+ table td .btn-group.actions-group{
+     width: 126px;
+ }
+ 
+ #singleSimulationsTable, #paramSweepSimulationsTable{
+     margin-bottom: 150px;
+ }

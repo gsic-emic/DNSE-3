@@ -1,0 +1,47 @@
+<?php
+require_once(dirname(__FILE__)."/../conf/properties.php");
+require_once(dirname(__FILE__)."/../core/authenticate.php");
+
+$error_credentials = null;
+//start the session to save the variables
+session_start();
+if (isset($_POST)){
+    //set the session variables if it is possible
+    if (isset($_POST["loginUsername"]) && !empty($_POST["loginUsername"])){
+        $_SESSION["username"] = $_POST["loginUsername"];
+    }
+    if (isset($_POST["loginPassword"]) && !empty($_POST["loginPassword"])){
+        $_SESSION["password"] = $_POST["loginPassword"];
+    }
+    if ( isset($_POST["loginUsername"]) && !empty($_POST["loginUsername"]) && isset($_POST["loginPassword"]) && !empty($_POST["loginPassword"])){
+        $authenticated = ldap_authenticate($_SESSION["username"], $_SESSION["password"]);
+        if ($authenticated){
+           $error_credentials = false;
+        }  else {
+            // remove all session variables
+            session_unset();
+            // destroy the session 
+            session_destroy();
+            $error_credentials = true;
+        }
+    }
+}
+//redirect depending on the login result
+if (isset($_SESSION["username"]) && !empty($_SESSION["username"]) && isset($_SESSION["password"]) && !empty($_SESSION["password"]) && !$error_credentials){
+    $username = $_SESSION["username"];
+    require_once(dirname(__FILE__)."/../model/UsersManager.php");
+    require_once(dirname(__FILE__)."/../model/SimulationProjectsManager.php");
+    $uc = new UsersManager();
+    $user = $uc->getUser($username);
+    $spc = new SimulationProjectsManager($username);
+    $sim_projects = $spc->getSimulationProjects();
+    //header('Location: '. $CONF_PROP["dnse3_root"]. "/php/view/main.php");
+    require_once(dirname(__FILE__)."/../view/main.php");
+}else{
+    //header('Location: '. $CONF_PROP["dnse3_root"]. "/php/view/login.php");
+    require_once(dirname(__FILE__)."/../view/login.php");
+}
+
+
+
+?>

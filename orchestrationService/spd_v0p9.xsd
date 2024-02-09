@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://gsic.tel.uva.es/dnse3/spd_v0p9"
+	xmlns="http://gsic.tel.uva.es/dnse3/spd_v0p9"
+	elementFormDefault="qualified">
+
+	<xsd:element name="simulationpackage">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="description" minOccurs="1"
+					maxOccurs="1" />
+				<xsd:element ref="parametertypes" minOccurs="1"
+					maxOccurs="1" />
+				<xsd:element ref="outputfilestructures"	minOccurs="1"
+					maxOccurs="1" />
+				<xsd:element ref="outputfiles" minOccurs="1"
+					maxOccurs="1" />
+			</xsd:sequence>
+		</xsd:complexType>
+		<xsd:key name="filestructureId">
+				<xsd:selector xpath="./outputfilestructures/filestructure" />
+				<xsd:field xpath="@id" />
+		</xsd:key>
+		<xsd:keyref name="filestructureIdRef" refer="filestructureId">
+				<xsd:selector xpath="./outputfiles/tabbedfile | ./outputfiles/resultfile" />
+				<xsd:field xpath="@filestructureref" />
+		</xsd:keyref>
+	</xsd:element>
+
+	<xsd:element name="description">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="title" type="xsd:string"
+					minOccurs="0" maxOccurs="1" />
+				<xsd:element name="textualdescription" type="xsd:string"
+					minOccurs="0" maxOccurs="1" />			
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="inputfiles">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="basefile" type="xsd:string"
+					minOccurs="1" maxOccurs="1" />
+				<xsd:element name="additionalfile" type="xsd:string"
+					minOccurs="0" maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="parametertypes">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="stringtype" minOccurs="0"
+					maxOccurs="unbounded" />
+				<xsd:element ref="integertype" minOccurs="0"
+					maxOccurs="unbounded" />
+				<xsd:element ref="rationaltype" minOccurs="0"
+					maxOccurs="unbounded" />
+				<xsd:element ref="seedtype" minOccurs="0"
+					maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="stringtype">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="possiblevalue" type="xsd:string"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xsd:element name="defaultvalue" type="xsd:string" minOccurs="1"
+					maxOccurs="1" />
+			</xsd:sequence>
+			<xsd:attribute name="id" type="xsd:ID" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="integertype">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:choice minOccurs="0" maxOccurs="1">
+					<xsd:element name="greaterthan" type="xsd:integer" />
+					<xsd:element name="greaterthanorequalto"
+						type="xsd:integer" />
+				</xsd:choice>
+				<xsd:choice minOccurs="0" maxOccurs="1">
+					<xsd:element name="lessthan" type="xsd:integer" />
+					<xsd:element name="lessthanorequalto"
+						type="xsd:integer" />
+				</xsd:choice>
+				<xsd:element name="defaultvalue" type="xsd:integer" minOccurs="1"
+					maxOccurs="1" />
+			</xsd:sequence>
+			<xsd:attribute name="id" type="xsd:ID" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="rationaltype">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:choice minOccurs="0" maxOccurs="1">
+					<xsd:element name="greaterthan" type="xsd:float" />
+					<xsd:element name="greaterthanorequalto"
+						type="xsd:float" />
+				</xsd:choice>
+				<xsd:choice minOccurs="0" maxOccurs="1">
+					<xsd:element name="lessthan" type="xsd:float" />
+					<xsd:element name="lessthanorequalto"
+						type="xsd:float" />
+				</xsd:choice>
+				<xsd:element name="defaultvalue" type="xsd:float" minOccurs="1"
+					maxOccurs="1" />
+			</xsd:sequence>
+			<xsd:attribute name="id" type="xsd:ID" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="seedtype">
+		<xsd:complexType>
+			<xsd:attribute name="id" type="xsd:ID" use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="outputfilestructures">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="filestructure" minOccurs="0"
+					maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="filestructure">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="outputvar" type="xsd:string"
+					minOccurs="1" maxOccurs="unbounded" />
+			</xsd:sequence>
+			<xsd:attribute name="id" type="xsd:ID" use="required" />
+			<xsd:attribute name="ismultilinefile" type="xsd:boolean"
+				use="required" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="outputfiles">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="tabbedfile" minOccurs="0"
+					maxOccurs="unbounded" />
+				<xsd:element name="tracefile" type="xsd:string"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xsd:element ref="resultfile" minOccurs="0"
+					maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="tabbedfile">
+		<xsd:complexType>
+			<xsd:simpleContent>
+				<xsd:extension base="xsd:string">
+					<xsd:attribute name="filestructureref"
+						type="xsd:IDREF" use="required" />
+				</xsd:extension>
+			</xsd:simpleContent>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="resultfile">
+		<xsd:complexType>
+			<xsd:simpleContent>
+				<xsd:extension base="xsd:string">
+					<xsd:attribute name="filestructureref"
+						type="xsd:IDREF" use="required" />
+				</xsd:extension>
+			</xsd:simpleContent>
+		</xsd:complexType>
+	</xsd:element>
+
+</xsd:schema>

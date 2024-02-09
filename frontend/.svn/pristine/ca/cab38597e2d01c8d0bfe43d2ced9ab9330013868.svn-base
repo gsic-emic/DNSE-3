@@ -1,0 +1,108 @@
+/**
+ * Manager for the modal dialog that creates a new simulation
+ */
+var NewSimulationModal = {
+    
+    modalId: "new_simulation_modal",
+    cancelButtonId: "new_simulation_modal_cancel",
+    acceptButtonId: "new_simulation_modal_accept",
+    projectId: null,
+    parameterDescriptions: null,
+    
+    init: function(){
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            NewSimulationModal.acceptNewSimulation();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            NewSimulationModal.cancelNewSimulation();
+        });
+        
+        //events for the tabas
+        $('a[data-toggle="tab"][href="#step1-details"]').on('shown.bs.tab', function (e) {
+            alert("step1");
+        });
+        $('a[data-toggle="tab"][href="#step2-parameters"]').on('shown.bs.tab', function (e) {
+            NewSimulationModal.setTabParametersFields();
+        });
+        $('a[data-toggle="tab"][href="#step3-files"]').on('shown.bs.tab', function (e) {
+            alert("step3");
+        });
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    setModalFields: function(){
+        NewSimulationModal.showModal();
+    },
+    
+    checkModalFields: function(){
+        var errors = false;
+        if (!errors){
+            this.postRequest();
+        }
+    },
+    
+    newSimulation: function(projectId){
+        this.projectId = projectId;
+        this.parameterDescriptions = null;
+        this.setModalFields();
+    },
+    
+    acceptNewSimulation: function(){
+        this.checkModalFields();
+    },
+    
+    postRequest: function(){
+        NewSimulationModal.hideModal();
+    },
+    
+    cancelNewSimulation: function(){
+        this.hideModal();
+    },
+    
+    getParameterDescriptions: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/itrtx01/projects/" + NewSimulationModal.projectId + "/parameterdescriptions/",
+            method: "GET",
+            //data: {projectId: 1},
+            success : function(data) {
+                NewSimulationModal.parameterDescriptions = data;
+                $("#new-simulation-ps-name").empty();
+                $('<option value="">-- Selecciona el nombre del parámetro --</option>').appendTo("#new-simulation-ps-name");
+                for(var i = 0; i < data.length; i++){
+                    $('<option value="' + data[i].name + '">' + data[i].name + '</option>').appendTo("#new-simulation-ps-name");
+                }
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    setTabParametersFields: function(){
+        var simulation_type = $('input[name="new-simulation-type"]:checked', '#form-new-simulation-details').val();
+        if (simulation_type == "single"){
+            $("#div-form-new-simulation-parameters-single").show();
+            $("#div-form-new-simulation-parameters-sweep").hide();
+            this.getParameterDescriptions();
+        }else{
+            $("#div-form-new-simulation-parameters-single").hide();
+            $("#div-form-new-simulation-parameters-sweep").show();
+        }
+    }
+    
+};
+

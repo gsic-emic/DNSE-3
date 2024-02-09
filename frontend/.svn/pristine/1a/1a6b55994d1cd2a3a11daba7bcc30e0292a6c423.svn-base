@@ -1,0 +1,19 @@
+body {
+    background-color: #eee;
+}
+
+.header{
+    margin-top: 20px;
+}
+
+.login-panel{
+    margin-top: 60px;
+    margin-bottom: 60px;
+}
+
+.form-signin .form-control {
+    position: relative;
+    height: auto;
+    padding: 10px;
+    font-size: 16px;
+}

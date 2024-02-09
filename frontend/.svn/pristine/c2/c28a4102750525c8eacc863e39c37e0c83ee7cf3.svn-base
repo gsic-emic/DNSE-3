@@ -1,0 +1,234 @@
+/**
+ * Manager for the modal dialog that edits a simulation
+ */
+var EditSimulationModal = {
+    
+    modalId: "edit_simulation_modal",
+    cancelButtonId: "edit_simulation_modal_cancel",
+    acceptButtonId: "edit_simulation_modal_accept",
+    simulationId: null,
+    simulationType: null,
+    singleSimulation: null,
+    parameterSweepSimulation: null,
+    painters: null,
+        
+    init: function(){
+        this.painters = new Array();
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            EditSimulationModal.acceptEditSimulation();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            EditSimulationModal.cancelEditSimulation();
+        });     
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    getSingleSimulation: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/singlesimulations/" + this.simulationId,
+            method: "GET",
+            dataType: "json",//the expected data type from the server
+            success : function(data) {
+                EditSimulationModal.singleSimulation = data;
+                EditSimulationModal.setModalFields();
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    getParameterSweepSimulation: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/parametersweepsimulations/" + this.simulationId,
+            method: "GET",
+            dataType: "json",//the expected data type from the server
+            success : function(data) {
+                EditSimulationModal.parameterSweepSimulation = data;
+                EditSimulationModal.setModalFields();
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    setModalFields: function(){
+        var simulation;
+        if (this.simulationType=="single"){
+            simulation = this.singleSimulation;
+        }else if (this.simulationType =="sweep"){
+            simulation = this.parameterSweepSimulation;
+        }
+        $("#form-group-esd-name").removeClass("has-error");
+        $("#form-group-esd-repetitions").removeClass("has-error");
+        $("#form-group-esd-simulation-type").removeClass("has-error");
+        $("#alert-danger-step1-details").addClass("hidden");
+        
+        $("#edit-simulation-name").val(simulation.name);
+        $("#edit-simulation-repetitions").val(simulation.numRepetitions);
+        if (this.simulationType == "single"){
+            $('input[name="edit-simulation-type"][value="single"]').prop("checked", true);
+        }else if (this.simulationType =="sweep"){
+            $('input[name="edit-simulation-type"][value="parameter-sweep"]').prop("checked", true);
+        }
+        $('input[name="edit-simulation-type"]').each(function(){
+            $(this).prop("disabled",true);  
+        });
+        
+        this.showModal();
+    },
+    
+    checkModalFields: function(){
+        var errors = false;
+        
+        var name = $("#edit-simulation-name").val();
+        if (name == ""){
+            $("#form-group-esd-name").addClass("has-error");
+            $('#edit-simulation-name').focus();
+            errors = true;
+        }else{
+            $("#form-group-esd-name").removeClass("has-error");
+        }
+        
+        var repetitions = $("#edit-simulation-repetitions").val();
+        if (repetitions == "" || repetitions<=0 || Math.floor(repetitions) != repetitions || !$.isNumeric(repetitions) ){
+            $("#form-group-esd-repetitions").addClass("has-error");
+            if(!errors){
+                $('#edit-simulation-repetitions').focus();
+            }
+            errors = true;
+        }else{
+            $("#form-group-esd-repetitions").removeClass("has-error");
+        }
+        
+        if ($('input[name="edit-simulation-type"]:checked').length == 0){
+            $("#form-group-esd-simulation-type").addClass("has-error");
+            errors = true;
+        }
+        
+        if (errors){
+            $("#alert-danger-step1-details").removeClass("hidden");
+            $("#alert-danger-step1-details").html("Comprueba los campos marcados en rojo");
+        }else{
+            if (this.simulationType=="single"){
+                this.singleSimulationUpdateRequest();
+            }else if (this.simulationType =="sweep"){
+                this.parameterSweepSimulationUpdateRequest();
+            }
+        }
+    },
+    
+    editSimulation: function(simulationId, simulationType){
+        this.simulationId = simulationId;
+        this.simulationType = simulationType;
+        this.parameters = null;
+        if (this.simulationType == "single"){
+            this.getSingleSimulation();
+        }else if (this.simulationType == "sweep"){
+            this.getParameterSweepSimulation();
+        }
+    },
+    
+    addPainter: function(painterObj){
+        this.painters.push(painterObj);
+    },
+    
+    deletePainter: function(painterObj){
+        var index = this.painters.indexOf(painterObj);
+        if (index > -1){
+            this.painters.splice(index, 1);
+        }
+    },
+    
+    notifyPainters: function(){
+        for (var i = 0; i < this.painters.length; i++){
+            var painter = this.painters[i];
+            painter.paint();
+        }
+    },
+    
+    acceptEditSimulation: function(){
+        this.checkModalFields();
+    },
+    
+    singleSimulationUpdateRequest: function(){       
+        var name = $("#edit-simulation-name").val();
+        var repetitions = $("#edit-simulation-repetitions").val();
+        var singleSimData = {
+          name: name,
+          numRepetitions: repetitions
+        };
+        //var jsonData = JSON.stringify(data);
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/singlesimulations/" + this.simulationId,
+            method: "PUT",
+            //contentType: "application/json",
+            data: singleSimData,
+            success: function(data){
+                EditSimulationModal.hideModal();
+                EditSimulationModal.notifyPainters();
+            },
+            error : function(xhr, status) {
+                //here an alert should be desplay
+                alert("Se ha producido un error al actualizar la simulación individual");
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+    parameterSweepSimulationUpdateRequest: function(){
+        var name = $("#edit-simulation-name").val();
+        var repetitions = $("#edit-simulation-repetitions").val();
+        var paramSweepSimData = {
+          name: name,
+          numRepetitions: repetitions
+        };
+        //var jsonData = JSON.stringify(data);
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/parametersweepsimulations/" + this.simulationId,
+            method: "PUT",
+            //contentType: "application/json",
+            data: paramSweepSimData,
+            success: function(data){
+                EditSimulationModal.hideModal();
+                EditSimulationModal.notifyPainters();
+            },
+            error : function(xhr, status) {
+                //here an alert should be desplay
+                alert("Se ha producido un error al actualizar la simulación de barrido de parámetros");
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+    cancelEditSimulation: function(){
+        this.hideModal();
+    }
+    
+};
+

@@ -1,0 +1,15 @@
+version: "3"
+services:
+  simulator:
+    image: gsicemic/dnse3:simulation
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      - limit=4
+      - queueAddress=/*IP queue service*/:8081
+    networks:
+      - webnet
+networks:
+  webnet:

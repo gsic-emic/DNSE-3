@@ -1,0 +1,247 @@
+/**
+ * Manager for the modal dialog that views a parameter sweep simulation
+ */
+var ViewParameterSweepSimulationModal = {
+    
+    modalId: "view-simulation-modal",
+    closeButtonId: "view-simulation-modal-close",
+    simulationId: null,
+    
+    init: function(){
+        
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    viewParameterSweepSimulation: function(simulationId){
+        this.simulationId = simulationId;
+        
+        this.getSimulationDescription();
+        this.getSimulationParameters();
+        this.getSimulationOutputFiles();
+        this.showModal();
+        //show the first tab when opening the modal
+        $('#view-simulation-details-tabs a:first').tab('show');
+    },
+    
+    getSimulationDescription: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/parametersweepsimulations/" + ViewParameterSweepSimulationModal.simulationId,
+            method: "GET",
+            success : function(data) {
+                ViewParameterSweepSimulationModal.setSimulationDescriptionTab(data);
+            },
+            error : function(xhr, status) {
+                //show the error
+                manageRequestError(xhr, status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+            
+    getSimulationParameters: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/parametersweepsimulations/" + ViewParameterSweepSimulationModal.simulationId + "/parameters/",
+            method: "GET",
+            success : function(data) {
+                ViewParameterSweepSimulationModal.setSimulationParametersTab(data);
+            },
+            error : function(xhr, status) {
+                //show the error
+                manageRequestError(xhr, status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    getSimulationOutputFiles: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/parametersweepsimulations/" + ViewParameterSweepSimulationModal.simulationId + "/outputfiles/",
+            method: "GET",
+            //data: {projectId: 1},
+            success : function(data) {
+                ViewParameterSweepSimulationModal.setSimulationOutputFiles(data);
+            },
+            error : function(xhr, status) {
+                //show the error
+                manageRequestError(xhr, status);
+            },
+
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+      
+    },
+    
+    setSimulationDescriptionTab: function(simulation){
+        var now_date = new Date();
+        var simulation_creation_date_field = getDateFieldText(simulation.creationDate, now_date);
+        var simulation_update_date_field = getDateFieldText(simulation.updateDate, now_date);
+        
+        var details_tp = $("#view-simulation-details-tp-desc");
+        details_tp.empty();
+        var div_inf_panel = $('<div class="information-panel"></div');
+        var panel_content = "";
+        panel_content += '<div class="row">';
+        panel_content += '<div class="col-lg-6"><span class="title">Nombre</span></div>';
+        panel_content += '<div class="col-lg-6 content-value">' + simulation.name + '</div>';
+        panel_content += '</div>';
+        
+        panel_content += '<div class="row">';
+        panel_content += '<div class="col-lg-6"><span class="title">Número de repeticiones</span></div>';
+        panel_content += '<div class="col-lg-6 content-value">' + simulation.numRepetitions + '</div>';
+        panel_content += '</div>';
+        
+        panel_content += '<div class="row">';
+        panel_content += '<div class="col-lg-6"><span class="title">Tipo de simulación</span></div>';
+        panel_content += '<div class="col-lg-6 content-value">' + 'Barrido de parámetros' + '</div>';
+        panel_content += '</div>';
+        
+        panel_content += '<div class="row">';
+        panel_content += '<div class="col-lg-6"><span class="title">Estado</span></div>';
+        panel_content += '<div class="col-lg-6 content-value">' + simulation.status + '</div>';
+        panel_content += '</div>';
+        
+        panel_content += '<div class="row">';
+        panel_content += '<div class="col-lg-6"><span class="title">Fecha de creación</span></div>';
+        panel_content += '<div class="col-lg-6 content-value">' + simulation_creation_date_field + '</div>';
+        panel_content += '</div>';
+        
+        panel_content += '<div class="row">';
+        panel_content += '<div class="col-lg-6"><span class="title">Última modificación</span></div>';
+        panel_content += '<div class="col-lg-6 content-value">' + simulation_update_date_field + '</div>';
+        panel_content += '</div>';
+        
+        if (typeof simulation.completedSimulations != 'undefined'){
+            panel_content += '<div class="row">';
+            panel_content += '<div class="col-lg-6"><span class="title">Simulaciones completadas</span></div>';
+            panel_content += '<div class="col-lg-6 content-value">' +  simulation.completedSimulations + '</div>';
+            panel_content += '</div>';
+        }
+        if (typeof simulation.totalSimulations != 'undefined'){
+            panel_content += '<div class="row">';
+            panel_content += '<div class="col-lg-6"><span class="title"><span class="title">Simulaciones totales</span></div>';
+            panel_content += '<div class="col-lg-6 content-value">' +  simulation.totalSimulations + '</div>';
+            panel_content += '</div>';
+        }
+        details_tp.append(div_inf_panel);
+        div_inf_panel.html(panel_content);
+    },
+    
+    setSimulationParametersTab: function(parameters){
+        var params_tp = $("#view-simulation-details-tp-params");
+        params_tp.empty();
+        for (var i = 0; i < parameters.length; i++){
+            var param = parameters[i];
+            var div_inf_panel = $('<div class="information-panel"></div');
+            params_tp.append(div_inf_panel);
+            var panel_title = $('<div class="information-panel-title expandable"></div>');
+            div_inf_panel.append(panel_title);
+            var panel_title_html = '<span class="title">' + param.name + '<span class="glyphicon glyphicon-triangle-bottom pull-right" aria-hidden="true"></span></span>';
+            panel_title.html(panel_title_html);
+            var panel_content = $('<div class="information-panel-content"></div>');
+            div_inf_panel.append(panel_content);
+            var panel_content_html = '';
+            if (typeof param.values != 'undefined'){
+                panel_content_html += '<div class="row">';
+                panel_content_html += '<div class="col-lg-6"><span class="title">Valores</span></div>';
+                panel_content_html += '<div class="col-lg-6 content-value">' + param.values.join(", ") + '</div>';
+                panel_content_html += '</div>';
+            }else if (typeof param.minValue != 'undefined' && typeof param.step != 'undefined' && typeof param.maxValue != 'undefined'){
+                panel_content_html += '<div class="row">';
+                panel_content_html += '<div class="col-lg-6"><span class="title">Mínimo</span></div>';
+                panel_content_html += '<div class="col-lg-6 content-value">' + param.minValue + '</div>';
+                panel_content_html += '</div>';
+                
+                panel_content_html += '<div class="row">';
+                panel_content_html += '<div class="col-lg-6"><span class="title">Incremento</span></div>';
+                panel_content_html += '<div class="col-lg-6 content-value">' + param.step + '</div>';
+                panel_content_html += '</div>'; 
+                
+                panel_content_html += '<div class="row">';
+                panel_content_html += '<div class="col-lg-6"><span class="title">Máximo</span></div>';
+                panel_content_html += '<div class="col-lg-6 content-value">' + param.maxValue + '</div>';
+                panel_content_html += '</div>'; 
+            }else if (param.random){
+                panel_content_html += '<div class="row">';
+                panel_content_html += '<div class="col-lg-6"><span class="title">Valores</span></div>';
+                panel_content_html += '<div class="col-lg-6 content-value">' + 'random' + '</div>';
+                panel_content_html += '</div>';
+            }
+            
+            panel_content.html(panel_content_html);
+            setExpandableSection(div_inf_panel[0]);
+        }
+    },
+    
+    setSimulationOutputFiles: function(outputFiles){
+        var output_files_tp = $("#view-simulation-details-tp-files");
+        output_files_tp.empty();
+        for (var i = 0; i < outputFiles.length; i++){
+            var outputFile = outputFiles[i];
+            var outputFileStructure = outputFile.outputFileStructure;
+            var div_inf_panel = $('<div class="information-panel"></div');
+            output_files_tp.append(div_inf_panel);
+            var panel_title = $('<div class="information-panel-title expandable"></div>');
+            div_inf_panel.append(panel_title);
+            var panel_title_html = '<span class="title">' + outputFile.outputFileName + '<span class="glyphicon glyphicon-triangle-bottom pull-right" aria-hidden="true"></span></span>';
+            panel_title.html(panel_title_html);
+            
+            var panel_content = $('<div class="information-panel-content"></div>');
+            div_inf_panel.append(panel_content);
+            var panel_content_html = '';
+            panel_content_html += '<div class="row">';
+            panel_content_html += '<div class="col-lg-6"><span class="title">Tipo</span></div>';
+            panel_content_html += '<div class="col-lg-6 content-value">' + outputFile.type + '</div>';
+            panel_content_html += '</div>';
+            
+            panel_content_html += '<div class="row">';
+            panel_content_html += '<div class="col-lg-6"><span class="title">Multilínea</span></div>';
+            panel_content_html += '<div class="col-lg-6 content-value">';
+            if (outputFileStructure.multiLine){
+                panel_content_html += 'Sí';
+            }else{
+                panel_content_html += 'No';
+            }
+            panel_content_html += '</div>';
+            panel_content_html += '</div>';
+            
+            panel_content_html += '<div class="row">';
+            panel_content_html += '<div class="col-lg-6"><span class="title">Variables de salida</span></div>';
+            panel_content_html += '<div class="col-lg-6 content-value">';
+            
+            var output_vars = outputFileStructure.outputVariables;
+            for (var j = 0; j < output_vars.length; j++){
+                panel_content_html += output_vars[j];
+                if (j < (output_vars.length-1)){
+                    panel_content_html += ', ';
+                }
+            }
+            panel_content_html += '</div>';
+            panel_content_html += '</div>';
+            
+            panel_content.html(panel_content_html);
+            setExpandableSection(div_inf_panel[0]);
+        }
+    }
+};
+

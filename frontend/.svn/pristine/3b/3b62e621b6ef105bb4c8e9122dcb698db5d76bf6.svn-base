@@ -1,0 +1,31 @@
+var SimulationPainter = {
+    
+    init: function(){
+    },
+    
+    paint: function(){
+        SimulationPainter.getSimulationProject();
+    },   
+    
+    getSimulationProject: function(){
+        $.ajax({
+            dataType: "json",
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/",
+            method: "GET",
+            //data: {projectId: 1},
+            success : function(data) {
+                //set the values for the fields
+                $("#simulation-project-name").html("Proyecto: " + data.name);              
+            },
+            error : function(xhr, status) {
+                alert(status);
+            },
+ 
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    }
+}
+

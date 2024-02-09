@@ -1,0 +1,22 @@
+<div id="alert-danger-step1-details" class="alert alert-danger hidden" role="alert"></div>
+<form id="form-new-simulation-details">
+    <div id="form-group-nsd-name" class="form-group">
+        <label class="control-label" for="new-simulation-name">Nombre</label>
+        <input type="text" class="form-control" id="new-simulation-name" placeholder="Nombre de la simulación" required autofocus>
+    </div>
+    <div id="form-group-nsd-repetitions" class="form-group">
+        <label class="control-label" for="new-simulation-repetitions">Número de repeticiones</label>
+        <input type="text" class="form-control" id="new-simulation-repetitions" placeholder="Número de repeticiones de la simulación" required>
+    </div>
+    <div id="form-group-nsd-simulation-type" class="form-group">
+        <label class="control-label">Tipo de simulación</label>
+        <div>
+            <label class="radio-inline">
+                <input type="radio" name="new-simulation-type" id="new-simulation-type-single" value="single"> Individual
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="new-simulation-type" id="new-simulation-type-parameter-sweep" value="parameter-sweep"> Barrido de parámetros
+            </label>
+        </div>
+    </div>
+</form>

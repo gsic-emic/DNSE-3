@@ -1,0 +1,64 @@
+<?php
+
+function ldap_authenticate($user, $password) {
+	if(empty($user) || empty($password)) return false;
+
+	// Active Directory server
+	$ldap_host = "ldap://10.0.104.211";
+
+	// Active Directory DN
+	$ldap_dn = "ou=People,dc=dnse3,dc=gsic,dc=uva,dc=es";
+
+	// Active Directory user group
+	$ldap_user_group = "cn=itrt,ou=Groups,dc=dnse3,dc=gsic,dc=uva,dc=es";
+
+	// Active Directory manager group
+	//$ldap_manager_group = "WebManagers";
+
+	// Domain, for purposes of constructing $user
+	$ldap_usr_dom = '@college.school.edu';
+
+	// connect to active directory
+	$ldap = ldap_connect($ldap_host) or die("Server not found");
+
+	ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
+
+	// verify user and password
+	if($bind = @ldap_bind($ldap, "uid=".$user.",ou=People,dc=dnse3,dc=gsic,dc=uva,dc=es", $password)) {
+		// valid
+		// check presence in groups
+		$filter = "(&(objectclass=posixaccount)(uid=".$user."))";
+		$attr = array("memberOf");
+		$result = ldap_search($ldap, $ldap_dn, $filter, $attr) or exit("Unable to search LDAP server");
+		$entries = ldap_get_entries($ldap, $result);
+		ldap_unbind($ldap);
+		$access=0;
+
+		// check groups
+		foreach($entries[0]['memberof'] as $grps) {
+			// is manager, break loop
+			$pos= strpos($grps, $ldap_user_group);
+			/*if(strpos($grps, $ldap_manager_group))
+				$access = 2;
+			*/
+			// is user
+			if($pos !== false)
+				$access = 1;
+		}
+
+		if($access != 0) {
+			// establish session variables
+			$_SESSION['user'] = $user;
+			$_SESSION['access'] = $access;
+			return true;
+		} else {
+			// user has no rights
+			return false;
+		}
+
+	} else {
+		// invalid name or password
+		return false;
+	}
+}
+?>

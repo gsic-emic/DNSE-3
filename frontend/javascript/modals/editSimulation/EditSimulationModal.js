@@ -1,0 +1,548 @@
+/**
+ * Manager for the modal dialog that edits a simulation
+ */
+var EditSimulationModal = {
+    
+    modalId: "edit_simulation_modal",
+    cancelButtonId: "edit_simulation_modal_cancel",
+    acceptButtonId: "edit_simulation_modal_accept",
+    /** 
+     * the id of the simulation that is being edited
+     */
+    simulationId: null,
+    /**
+     * the type of simulation that is being edited
+     */
+    simulationType: null,
+    singleSimulation: null,
+    parameterSweepSimulation: null,
+    painters: null,
+    
+    /**
+     * the parameters that are available for the simulation
+     */
+    parameters: null,
+        
+    init: function(){
+        this.painters = new Array();
+        //set the events for the buttons
+        $("#" + this.acceptButtonId).click(function(){
+            EditSimulationModal.acceptEditSimulation();
+        });
+        $("#" + this.cancelButtonId).click(function(){
+            EditSimulationModal.cancelEditSimulation();
+        });
+        
+        //events for the tabs before showing them
+        $('#edit_simulation_modal a[data-toggle="tab"][href="#edit-simulation-step1-details"]').on('shown.bs.tab', function (e) {
+            //alert("step1");
+            });
+        $('#edit_simulation_modal a[data-toggle="tab"][href="#edit-simulation-step2-parameters"]').on('shown.bs.tab', function (e) {
+            EditSimulationModal.setTabParametersFields();
+            });
+        $('#edit_simulation_modal a[data-toggle="tab"][href="#edit-simulation-step3-files"]').on('shown.bs.tab', function (e) {
+            EditSimulationModal.setTabFileGatheringFields();
+        });
+        
+        //next step button
+        $("#edit_simulation_modal .next-step").click(function (e) {
+            var active = $('#edit_simulation_modal .wizard .nav-tabs li.active');
+            if (active.prop("id")=="edit-simulation-modal-tabs-t1"){
+                var errors = EditSimulationModal.checkModalFieldsDetailsTab();
+                if (!errors){
+                    var active = $('#edit_simulation_modal .wizard .nav-tabs li.active');
+                    active.next().removeClass('disabled');
+                    nextTab(active);
+                }
+            }else if (active.prop("id")=="edit-simulation-modal-tabs-t2"){
+                EditSimulationModal.checkModalFieldsSimulationParametersTab();
+            }else if (active.prop("id")=="edit-simulation-modal-tabs-t3"){
+                //alert("check tab 3");
+            }
+
+        });
+        
+        //previous step button
+        $("#edit_simulation_modal .prev-step").click(function (e) {
+            var $active = $('#edit_simulation_modal .wizard .nav-tabs li.active');
+            prevTab($active);
+
+        });
+    },
+    
+    showModal: function(){
+        $('#' + this.modalId).modal('show');
+    },
+    
+    hideModal: function(){
+        $('#' + this.modalId).modal('hide');
+    },
+    
+    getSingleSimulation: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/singlesimulations/" + this.simulationId,
+            method: "GET",
+            dataType: "json",//the expected data type from the server
+            success : function(data) {
+                EditSimulationModal.singleSimulation = data;
+                EditSimulationModal.setModalFieldsDetailsTab();
+            },
+            error : function(xhr, status) {
+                //hide the dialog and show the error
+                EditSimulationModal.hideModal();
+                //manageRequestError(xhr, status);
+                ErrorModal.errorMessage(" Simulaciones Individuales", "Se ha producido un error al intentar cargar las simulaciones individuales.");
+            },
+
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    getParameterSweepSimulation: function(){
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"] + "/parametersweepsimulations/" + this.simulationId,
+            method: "GET",
+            dataType: "json",//the expected data type from the server
+            success : function(data) {
+                EditSimulationModal.parameterSweepSimulation = data;
+                EditSimulationModal.setModalFieldsDetailsTab();
+            },
+            error : function(xhr, status) {
+                //hide the dialog and show the error
+                EditSimulationModal.hideModal();
+                //manageRequestError(xhr, status);
+                ErrorModal.errorMessage(" Simulaciones de barrido", "Se ha producido un error al intentar cargar las simulaciones de barrido de parámetro.");
+            },
+
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+            //alert(status);
+            }
+        });
+    },
+    
+    setModalFieldsDetailsTab: function(){
+        $("#alert-danger-edit-simulation-details").addClass("hidden");
+        var simulation;
+        if (this.simulationType=="single"){
+            simulation = this.singleSimulation;
+        }else if (this.simulationType =="sweep"){
+            simulation = this.parameterSweepSimulation;
+        }
+        $("#form-group-esd-name").removeClass("has-error");
+        $("#form-group-esd-repetitions").removeClass("has-error");
+        $("#form-group-esd-priority").removeClass("has-error");
+        $("#form-group-esd-simulation-type").removeClass("has-error");
+        $("#alert-danger-edit-simulation-details").addClass("hidden");
+        
+        $("#edit-simulation-name").val(simulation.name);
+        $("#edit-simulation-repetitions").val(simulation.numRepetitions);
+        
+        $("#edit-simulation-priority").val(simulation.priority);
+        if (this.simulationType == "single"){
+            $('input[name="edit-simulation-type"][value="single"]').prop("checked", true);
+        }else if (this.simulationType =="sweep"){
+            $('input[name="edit-simulation-type"][value="parameter-sweep"]').prop("checked", true);
+        }
+        //the simulation type can not be changed
+        $('input[name="edit-simulation-type"]').each(function(){
+            $(this).prop("disabled",true);  
+        });
+        
+        //depending on the current status of the simulation the fields that can be edited vary
+        if (simulation.status == SimulationStatus.WAITING || simulation.status == SimulationStatus.CLEANING || simulation.status == SimulationStatus.ERROR){
+            //all of its attributes can be modified (name, numRepetitions, parameters, outputfiles)
+            $("#edit-simulation-name").prop("disabled", false);
+            $("#edit-simulation-repetitions").prop("disabled", false);
+            $("#edit-simulation-priority").prop("disabled", false);
+            
+            $("#edit-simulation-modal-tabs-t2").addClass("disabled");
+            $("#edit-simulation-modal-tabs-t3").addClass("disabled");
+            
+            $("#edit_simulation_modal .prev-step").hide();
+            $("#edit_simulation_modal .next-step").show();
+            $("#edit_simulation_modal_accept").hide();
+        }else if (simulation.status == SimulationStatus.FINISHED){
+            // Only its name can be modified.
+            $("#edit-simulation-name").prop("disabled", false);
+            $("#edit-simulation-repetitions").prop("disabled", true);
+            $("#edit-simulation-priority").prop("disabled", true);
+            
+            $("#edit-simulation-modal-tabs-t2").addClass("disabled");
+            $("#edit-simulation-modal-tabs-t3").addClass("disabled");
+            
+            $("#edit_simulation_modal .prev-step").hide();
+            $("#edit_simulation_modal .next-step").hide();
+            $("#edit_simulation_modal_accept").show();
+            $("#alert-danger-edit-simulation-details").html("Simulación en estado <strong>" + simulation.status + "</strong>. Sólo es posible modificar el nombre.");
+            $("#alert-danger-edit-simulation-details").removeClass("hidden");
+        }else if (simulation.status == SimulationStatus.PROCESSING || simulation.status == SimulationStatus.PAUSED || simulation.status == SimulationStatus.REPORTING ){
+            // Only its name can be modified.
+            $("#edit-simulation-name").prop("disabled", false);
+            $("#edit-simulation-repetitions").prop("disabled", true);
+            $("#edit-simulation-priority").prop("disabled", false);
+            
+            $("#edit-simulation-modal-tabs-t2").addClass("disabled");
+            $("#edit-simulation-modal-tabs-t3").addClass("disabled");
+            
+            $("#edit_simulation_modal .prev-step").hide();
+            $("#edit_simulation_modal .next-step").hide();
+            $("#edit_simulation_modal_accept").show();
+            $("#alert-danger-edit-simulation-details").html("Simulación en estado <strong>" + simulation.status + "</strong>. Sólo es posible modificar nombre y prioridad.");
+            $("#alert-danger-edit-simulation-details").removeClass("hidden");
+        }else if (simulation.status == SimulationStatus.PREPARING || simulation.status == SimulationStatus.REMOVING){
+            //None of its attributes can be modified.
+            $("#edit-simulation-name").prop("disabled", true);
+            $("#edit-simulation-repetitions").prop("disabled", true);
+            $("#edit-simulation-priority").prop("disabled", true);
+            
+            $("#edit-simulation-modal-tabs-t2").addClass("disabled");
+            $("#edit-simulation-modal-tabs-t3").addClass("disabled");
+            
+            $("#edit_simulation_modal .prev-step").hide();
+            $("#edit_simulation_modal .next-step").hide();
+            $("#edit_simulation_modal_accept").hide();
+            $("#alert-danger-edit-simulation-details").html("La simulación está en el estado : <em>" + simulation.status + "</em>. En este estado no es posible modificar nada.");
+            $("#alert-danger-edit-simulation-details").removeClass("hidden");
+        }
+        this.showModal();
+        //show the first tab when opening the modal
+        $('#edit-simulation-modal-tabs a:first').tab('show');
+        $('#edit-simulation-modal-tabs-t2').addClass("disabled");
+        $('#edit-simulation-modal-tabs-t3').addClass("disabled");
+    },
+    
+    checkModalFieldsDetailsTab: function(){
+        var errors = false;
+        
+        var name = $("#edit-simulation-name").val();
+        if (name == ""){
+            $("#form-group-esd-name").addClass("has-error");
+            $('#edit-simulation-name').focus();
+            errors = true;
+        }else{
+            $("#form-group-esd-name").removeClass("has-error");
+        }
+        
+        var repetitions = $("#edit-simulation-repetitions").val();
+        if (repetitions == "" || repetitions<=0 || Math.floor(repetitions) != repetitions || !$.isNumeric(repetitions) ){
+            $("#form-group-esd-repetitions").addClass("has-error");
+            if(!errors){
+                $('#edit-simulation-repetitions').focus();
+            }
+            errors = true;
+        }else{
+            $("#form-group-esd-repetitions").removeClass("has-error");
+        }
+
+        var priority = $("#edit-simulation-priority").val();
+        if(priority == "" || priority < 1 || priority > 100 || Math.floor(priority) != priority || !$.isNumeric(priority) ){
+            $("#form-group-esd-priority").addClass("has-error");
+            if(!errors){
+                $('#edit-simulation-priority').focus();
+            }
+            errors = true;
+        } else{
+            $("#form-group-esd-priority").removeClass("has-error");
+        }
+        
+        if ($('input[name="edit-simulation-type"]:checked').length == 0){
+            $("#form-group-esd-simulation-type").addClass("has-error");
+            errors = true;
+        }
+        
+        if (errors){
+            $("#alert-danger-edit-simulation-details").removeClass("hidden");
+            $("#alert-danger-edit-simulation-details").html("Comprueba los campos marcados en rojo");
+        }else{
+            $("#alert-danger-edit-simulation-details").addClass("hidden");
+        }
+        
+        return errors;
+    },
+    
+    checkModalFieldsSimulationParametersTab: function(){
+        var errors = false;
+        var simulation_type = $('input[name="edit-simulation-type"]:checked', '#form-edit-simulation-details').val();
+        if (simulation_type == "single"){
+            errors = EditSingleSimulation.checkIndividualSimulationParameters();
+        }else if (simulation_type == "parameter-sweep"){
+            errors = EditParameterSweepSimulation.checkSweepSimulationParameters();
+        }
+        if (!errors){
+            var active = $('#edit_simulation_modal .wizard .nav-tabs li.active');
+            active.next().removeClass('disabled');
+            nextTab(active);
+        }
+    },
+    
+    editSimulation: function(simulationId, simulationType){
+        this.simulationId = simulationId;
+        this.simulationType = simulationType;
+        this.parameters = null;
+        EditSingleSimulation.reset();
+        EditParameterSweepSimulation.reset();
+        EditSimulationFileGathering.reset();
+        if (this.simulationType == "single"){
+            this.getSingleSimulation();
+        }else if (this.simulationType == "sweep"){
+            this.getParameterSweepSimulation();
+        }
+    },
+    
+    addPainter: function(painterObj){
+        this.painters.push(painterObj);
+    },
+    
+    deletePainter: function(painterObj){
+        var index = this.painters.indexOf(painterObj);
+        if (index > -1){
+            this.painters.splice(index, 1);
+        }
+    },
+    
+    notifyPainters: function(){
+        for (var i = 0; i < this.painters.length; i++){
+            var painter = this.painters[i];
+            painter.paint();
+        }
+    },
+    
+    acceptEditSimulation: function(){
+        var errors;
+        var active = $('#edit_simulation_modal .wizard .nav-tabs li.active');
+        if (active.prop("id")=="edit-simulation-modal-tabs-t1"){
+            errors = EditSimulationModal.checkModalFieldsDetailsTab(); 
+        }else if (active.prop("id")=="edit-simulation-modal-tabs-t3"){
+            errors = EditSimulationFileGathering.checkFileGatheringFields();
+        }
+        if (!errors){
+            var simulation_type = $('input[name="edit-simulation-type"]:checked', '#form-edit-simulation-details').val();
+            if (simulation_type == "single"){
+                this.singleSimulationUpdateRequest();
+            }else{
+                this.parameterSweepSimulationUpdateRequest();
+            }
+        }
+    },
+    
+    singleSimulationUpdateRequest: function(){       
+        var singleSimData = this.buildSingleSimulationData();
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/singlesimulations/" + this.simulationId,
+            method: "PUT",
+            //contentType: "application/json",
+            data: singleSimData,
+            success: function(data){
+                EditSimulationModal.hideModal();
+                EditSimulationModal.notifyPainters();
+            },
+            error : function(xhr, status) {
+                //hide the dialog and show the error
+                EditSimulationModal.hideModal();
+                //manageRequestError(xhr, status);
+                ErrorModal.errorMessage(" Simulaciones Individuales", "Se ha producido un error al actualizar las simulaciones individuales.");
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+    parameterSweepSimulationUpdateRequest: function(){
+        var paramSweepSimData = this.buildSweepSimulationData();
+        $.ajax({
+            url: getBaseApiUrl() + "/users/username/projects/" + G_VARS["projectId"]  + "/parametersweepsimulations/" + this.simulationId,
+            method: "PUT",
+            //contentType: "application/json",
+            data: paramSweepSimData,
+            success: function(data){
+                EditSimulationModal.hideModal();
+                EditSimulationModal.notifyPainters();
+            },
+            error : function(xhr, status) {
+                //hide the dialog and show the error
+                EditSimulationModal.hideModal();
+                //manageRequestError(xhr, status);
+                ErrorModal.errorMessage(" Simulaciones de barrido", "Se ha producido un error al actualizar las simulaciones de barrido de parámetro.");
+            },
+            // código a ejecutar sin importar si la petición falló o no
+            complete : function(xhr, status) {
+                //alert(status);
+            }
+        });
+    },
+    
+     /**
+     * Get the information for the single simulation that is going to be updated and return it in the data format that is requested 
+     * by the POST request to the server side
+     */
+    buildSingleSimulationData: function(){
+        var single_sim_data;
+        var simulation = this.singleSimulation;
+        //depending on the current status of the simulation the fields that can be edited vary
+        if (simulation.status == SimulationStatus.WAITING || simulation.status == SimulationStatus.CLEANING || simulation.status == SimulationStatus.ERROR){
+            //all of its attributes can be modified (name, numRepetitions, parameters, outputfiles)
+            single_sim_data =  this.buildAllSingleSimulationData();
+        }else if (simulation.status == SimulationStatus.PROCESSING || simulation.status == SimulationStatus.PAUSED || simulation.status == SimulationStatus.REPORTING || simulation.status == SimulationStatus.FINISHED ){
+            // Only its name can be modified.
+            single_sim_data = this.buildOnlyNameSingleSimulationData();
+        }else if (simulation.status == SimulationStatus.PREPARING || simulation.status == SimulationStatus.REMOVING){
+            single_sim_data = {}; 
+        }
+        return single_sim_data;
+    },
+    
+    buildOnlyNameSingleSimulationData: function(){
+        //get the single simulation name
+        var name = $("#edit-simulation-name").val();
+        var priority = $("#edit-simulation-priority").val();
+        var single_sim_data = {
+            name: name,
+            priority: priority,
+            numRepetitions: 0
+        }
+        return single_sim_data;
+    },
+    
+    /**
+     * Get the information for the single simulation that is going to be updated and return it in the data format that is requested 
+     * by the POST request to the server side
+     */
+    buildAllSingleSimulationData: function(){
+        //get the single simulation name
+        var name = $("#edit-simulation-name").val();
+        //get the number of repetitions
+        var repetitions = $("#edit-simulation-repetitions").val();
+        //get the priority
+        var priority = $("#edit-simulation-priority").val();
+        //get the information about the output files
+        var output_files = new Array();
+        for (var i = 0; i < EditSimulationFileGathering.outputFilesChoose.length; i++){
+            var output_file_choose = EditSimulationFileGathering.outputFilesChoose[i];
+            if (output_file_choose.chosen){
+                output_files.push(output_file_choose.name);
+            }
+        }
+        //get the information about the parameters
+        var parameters = new Array();
+        for (var i = 0; i < EditSingleSimulation.singleSimulationParameters.length; i++){
+            var singleSimParamRes = EditSingleSimulation.singleSimulationParameters[i];
+            parameters.push(singleSimParamRes.getData());           
+        }
+        var single_sim_data = {
+            name: name,
+            numRepetitions: repetitions,
+            priority: priority,
+            outputFiles: output_files,
+            parameters: parameters
+        }
+        return single_sim_data;
+    },
+    
+     /**
+     * Get the information from the parameter sweep simulation that is being updated and return it in the data format that is requested 
+     * by the POST request to the server side
+     */
+    buildSweepSimulationData: function(){
+        var sweep_sim_data;
+        var simulation = this.parameterSweepSimulation;
+        //depending on the current status of the simulation the fields that can be edited vary
+        if (simulation.status == SimulationStatus.WAITING || simulation.status == SimulationStatus.CLEANING || simulation.status == SimulationStatus.ERROR){
+            //all of its attributes can be modified (name, numRepetitions, parameters, outputfiles)
+            sweep_sim_data =  this.buildAllSweepSimulationData();
+        }else if (simulation.status == SimulationStatus.PROCESSING || simulation.status == SimulationStatus.PAUSED || simulation.status == SimulationStatus.REPORTING || simulation.status == SimulationStatus.FINISHED ){
+            // Only its name can be modified.
+            sweep_sim_data = this.buildOnlyNameSweepSimulationData();
+        }else if (simulation.status == SimulationStatus.PREPARING || simulation.status == SimulationStatus.REMOVING){
+            sweep_sim_data = {}; 
+        }
+        return sweep_sim_data;
+    },
+    
+     /**
+     * Get the information from the parameter sweep simulation that is being updated and return it in the data format that is requested 
+     * by the POST request to the server side
+     */
+    buildAllSweepSimulationData: function(){
+        //get the sweep simulation name
+        var name = $("#edit-simulation-name").val();
+        //get the number of repetitions
+        var repetitions = $("#edit-simulation-repetitions").val();
+        //get priority
+        var priority = $("edit-simulation-priority").val();
+        //get the information about the output files
+        var output_files = new Array();
+        for (var i = 0; i < EditSimulationFileGathering.outputFilesChoose.length; i++){
+            var output_file_choose = EditSimulationFileGathering.outputFilesChoose[i];
+            if (output_file_choose.chosen){
+                output_files.push(output_file_choose.name);
+            }
+        }
+        //get the information about the parameters
+        var parameters = new Array();
+        for (var i = 0; i < EditParameterSweepSimulation.sweepSimulationParameters.length; i++){
+            var sweepSimParamRes = EditParameterSweepSimulation.sweepSimulationParameters[i];
+            parameters.push(sweepSimParamRes.getData());           
+        }
+        var sweep_sim_data = {
+            name: name,
+            numRepetitions: repetitions,
+            priority: priority,
+            outputFiles: output_files,
+            parameters: parameters
+        }
+        return sweep_sim_data;
+    },
+    
+    buildOnlyNameSweepSimulationData: function(){
+        //get the single simulation name
+        var name = $("#edit-simulation-name").val();
+        var priority = $("#edit-simulation-priority").val();
+        var sweep_sim_data = {
+            name: name,
+            priority: priority,
+            numRepetitions: 0
+        }
+        return sweep_sim_data;
+    },
+    
+    cancelEditSimulation: function(){
+        this.hideModal();
+    },
+    
+    setTabParametersFields: function(){
+        var simulation_type = $('input[name="edit-simulation-type"]:checked', '#form-edit-simulation-details').val();
+        if (simulation_type == "single"){
+            $("#div-form-edit-simulation-parameters-single").show();
+            EditSingleSimulation.setSingleSimulationFields();
+            $("#div-form-edit-simulation-parameters-sweep").hide();
+        }else{
+            $("#div-form-edit-simulation-parameters-single").hide();          
+            EditParameterSweepSimulation.setParameterSweepSimulationFields();
+            $("#div-form-edit-simulation-parameters-sweep").show();
+        }
+    },
+    
+    setTabFileGatheringFields: function(){
+        var simulation_type = $('input[name="edit-simulation-type"]:checked', '#form-edit-simulation-details').val();
+        var repetitions = $("#edit-simulation-repetitions").val();
+        EditSimulationFileGathering.setFileGatheringFields(simulation_type, repetitions);
+    },
+    
+    getParameter: function(name){
+        for (var i = 0; i < this.parameters.length; i++){
+            var ss_param = this.parameters[i];
+            if (ss_param.getName() == name){
+                return ss_param;
+            }
+        }
+        return null;
+    }
+    
+};
+

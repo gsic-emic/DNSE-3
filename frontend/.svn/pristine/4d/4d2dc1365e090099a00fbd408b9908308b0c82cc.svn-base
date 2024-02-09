@@ -1,0 +1,106 @@
+<?php
+
+/* Copyright (C) 2015 Intelligent & Cooperative Systems Research Group/Education,
+  Media, Computing & Culture (GSIC-EMIC). University of Valladolid(UVA).
+  Valladolid, Spain. https://www.gsic.uva.es/
+
+  This file is part of Web Collage.
+
+  Web Collage is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Web Collage is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+require_once("rest.php");
+require_once("resources/SimulationProjectListResource.php");
+require_once("resources/SimulationProjectResource.php");
+require_once("resources/ParameterDescriptionListResource.php");
+require_once("resources/OutputFileStructureListResource.php");
+
+session_start();
+if (isset($_SESSION) && isset($_SESSION["username"]) && !empty($_SESSION["username"]) && isset($_SESSION["password"]) && !empty($_SESSION["password"])){
+    //it is an already existing session (the user is log in)
+    $username = $_SESSION["username"];
+}else if (isset($_SERVER['PHP_AUTH_USER'])) {//the request is using basic authentication
+    //check if the credentials are right
+    $authenticated = ldap_authenticate($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+    if ($authenticated){
+        $username = $_SERVER['PHP_AUTH_USER'];
+    }
+}
+if (!isset($username)){
+    RestUtils::sendResponse(401, "Authentication required", 'text/html');
+    exit;
+}
+
+
+$data = RestUtils::processRequest();
+if (isset($_REQUEST["_route_"])) {
+    $route = "/" . $_REQUEST["_route_"];
+    $request_vars = $data->getRequestVars();
+    $route_array = explode("/", $route);
+    array_shift($route_array);
+    if (strcmp($route_array[count($route_array) - 1], "") == 0) {
+        array_pop($route_array);
+    }
+    if (strcmp($route_array[0], "users") == 0) {
+        if (count($route_array)>= 3 && strcmp($route_array[2], "projects") == 0){
+            if (count($route_array) == 3) {
+                //echo "/DNSE3/api/users/{username}/projects/";
+                $method = $data->getMethod();
+                $accept = $data->getHttpAccept();
+                //$username = $route_array[1];
+                $sim_project_list_resource = new SimulationProjectListResource($method, $accept, $username);
+                $response = $sim_project_list_resource->exec();
+                RestUtils::sendResponse($response->getStatus(), $response->getBody(), $response->getContentType());
+            }
+            if (count($route_array) == 4) {
+                //echo "/DNSE3/api/users/{username}/projects/{projectId}/";
+                $method = $data->getMethod();
+                $accept = $data->getHttpAccept();
+                //$username = $route_array[1];
+                $projectId = $route_array[3];
+                $sim_project_resource = new SimulationProjectResource($method, $accept, $username, $projectId, $request_vars);
+                $response = $sim_project_resource->exec();
+                RestUtils::sendResponse($response->getStatus(), $response->getBody(), $response->getContentType());
+            }
+            if (count($route_array) >= 5 && strcmp($route_array[4], "parameterdescriptions") == 0) {
+                if (count($route_array) == 5){
+                    //echo "DNS3/api/users/{username}/projects/{projectId}/parameterdescriptions/
+                    $method = $data->getMethod();
+                    $accept = $data->getHttpAccept();
+                    //$username = $route_array[1];
+                    $projectId = $route_array[3];
+                    $param_desc_list_resource = new ParameterDescriptionListResource($method, $accept, $username, $projectId);
+                    $response = $param_desc_list_resource->exec();
+                    RestUtils::sendResponse($response->getStatus(), $response->getBody(), $response->getContentType());
+                    
+                }
+            }
+            if (count($route_array) >= 5 && strcmp($route_array[4], "outputfilestructures") == 0) {
+                if (count($route_array) == 5){
+                    //echo "DNS3/api/users/{username}/projects/{projectId}/outputfilestructures/
+                    $method = $data->getMethod();
+                    $accept = $data->getHttpAccept();
+                    //$username = $route_array[1];
+                    $projectId = $route_array[3];
+                    $output_file_strc_list_resource = new OutputFileStructureListResource($method, $accept, $username, $projectId);
+                    $response = $output_file_strc_list_resource->exec();
+                    RestUtils::sendResponse($response->getStatus(), $response->getBody(), $response->getContentType());
+                    
+                }
+            }
+        }
+    }
+    RestUtils::sendResponse(404, '', 'text/html');
+} else {
+    RestUtils::sendResponse(404, '', 'text/html');
+}
+?>
