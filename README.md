@@ -15,7 +15,7 @@ The application has been divided into services. Some of these services make use 
 <div align="center">
   <figure>
     <img alt="Overview of the services that make up DNSE3 and their relationships." src="/images4doc/arqGen.svg" style="min-width:300px; max-width:800px; width:70%;">
-    <figcaption>Overview of the services that make up DNSE3 and their relationships.</figcaption>
+    <!-- <figcaption>Overview of the services that make up DNSE3 and their relationships.</figcaption> -->
   </figure>
 </div>
 
